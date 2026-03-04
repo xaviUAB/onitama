@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onitama - Joc d'Estratègia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-board: #e5e7eb;
+            --player-theme: #2563eb; /* Blau intens per a qui juga */
+            --player-theme-light: rgba(37, 99, 235, 0.3);
+            --cpu-red: #ef4444;
+            --cpu-red-light: rgba(239, 68, 68, 0.3);
+            --card-move-color: #fdba74; /* Taronja suau per als moviments de la carta */
+            --cell-size: clamp(45px, 12vw, 70px);
+        }
+
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        .game-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1100px;
+            padding-top: 20px;
+        }
+
+        .board-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        .side-slot {
+            width: 140px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            position: relative;
+            background-color: rgba(0,0,0,0.02);
+        }
+
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(5, var(--cell-size));
+            grid-template-rows: repeat(5, var(--cell-size));
+            gap: 4px;
+            background-color: #9ca3af;
+            padding: 4px;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .cell {
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .last-move-player { background-color: var(--player-theme-light) !important; }
+        .last-move-cpu { background-color: var(--cpu-red-light) !important; }
+
+        .cell.valid-move::after {
+            content: '';
+            width: 35%;
+            height: 35%;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(0,0,0,0.3);
+            border-radius: 50%;
+            position: absolute;
+            z-index: 30;
+            pointer-events: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .cell.temple-player { border-top: 4px solid var(--player-theme); }
+        .cell.temple-red { border-bottom: 4px solid var(--cpu-red); }
+
+        .piece {
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            z-index: 10;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .piece.master {
+            border-radius: 15% 15% 50% 50%;
+            font-weight: bold;
+        }
+
+        .piece.player { background-color: var(--player-theme); color: white; border: 3px solid #1e3a8a; }
+        .piece.red { background-color: var(--cpu-red); color: white; border: 3px solid #991b1b; }
+        
+        .piece.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            border-color: #fbbf24;
+        }
+
+        .card {
+            width: 140px;
+            height: 190px;
+            padding: 8px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s, border-color 0.2s;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 50;
+        }
+
+        .card.selected {
+            border-color: var(--player-theme);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            transform: translateY(-8px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            margin-bottom: 4px;
+        }
+
+        .card-silhouette-small {
+            font-size: 1.1rem;
+            filter: grayscale(1) brightness(0);
+            opacity: 1;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .mini-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            width: 110px;
+            height: 110px;
+            gap: 1px;
+            background: #eee;
+            position: relative;
+            margin-top: 8px;
+        }
+
+        .mini-cell { 
+            background: white; 
+            z-index: 1; 
+        }
+        
+        .mini-cell.center { 
+            background: #333; 
+            z-index: 10; 
+            position: relative;
+        }
+        .mini-cell.move { 
+            background: var(--card-move-color); 
+            z-index: 10; 
+            position: relative;
+        }
+
+        .modal {
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+        }
+
+        .modal-top {
+            align-items: flex-start;
+            padding-top: 5vh;
+        }
+
+        .cpu-card { transform: rotate(180deg); }
+        .side-card { transform: none; } 
+        .side-card.inverted { transform: rotate(180deg); }
+
+        .label-side {
+            position: absolute;
+            top: -25px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #9ca3af;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .difficulty-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        .deck-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+        .deck-option:has(input:checked) {
+            border-color: var(--player-theme);
+            background-color: #f0f7ff;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="p-4 flex flex-col items-center min-h-screen">
+
+    <div id="game-container" class="game-layout hidden">
+        <!-- Àrea CPU -->
+        <div class="flex flex-col items-center gap-2">
+            <h2 class="text-red-600 font-bold uppercase tracking-widest text-sm">CPU (Nivell <span id="display-difficulty">1</span>)</h2>
+            <div id="cpu-cards" class="flex gap-4"></div>
+        </div>
+
+        <!-- Zona central -->
+        <div class="board-container">
+            <div id="left-slot" class="side-slot">
+                <span class="label-side">Següent CPU</span>
+            </div>
+            <div id="board" class="board-grid"></div>
+            <div id="right-slot" class="side-slot">
+                <span class="label-side">Següent Persona</span>
+            </div>
+        </div>
+
+        <!-- Àrea Persona que Juga -->
+        <div class="flex flex-col items-center gap-2">
+            <div class="mb-2 text-sm text-gray-600" id="turn-indicator">És el teu torn</div>
+            <div id="player-cards" class="flex gap-4"></div>
+            <h2 class="text-blue-600 font-bold uppercase tracking-widest text-sm mt-2">Persona que Juga</h2>
+        </div>
+    </div>
+
+    <!-- Modal Inicial -->
+    <div id="start-modal" class="modal">
+        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full text-center">
+            <h1 class="text-3xl font-bold mb-6 text-gray-800">Onitama</h1>
+            
+            <div class="mb-8 text-left">
+                <p class="text-sm font-bold text-gray-500 uppercase mb-3 text-center">Tria les baralles:</p>
+                <div class="flex flex-col gap-3">
+                    <div class="deck-option">
+                        <label class="flex items-center gap-3 cursor-pointer flex-grow">
+                            <input type="checkbox" class="deck-checkbox w-5 h-5 accent-blue-600" value="base" checked onchange="validateStart()">
+                            <span class="text-sm font-medium">Joc Base (16 cartes)</span>
+                        </label>
+                        <button onclick="openPreview('base')" class="text-gray-400 hover:text-blue-600 transition p-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="deck-option">
+                        <label class="flex items-center gap-3 cursor-pointer flex-grow">
+                            <input type="checkbox" class="deck-checkbox w-5 h-5 accent-blue-600" value="sensei" onchange="validateStart()">
+                            <span class="text-sm font-medium">Senda del Sensei (16 cartes)</span>
+                        </label>
+                        <button onclick="openPreview('sensei')" class="text-gray-400 hover:text-blue-600 transition p-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-sm font-bold text-gray-500 uppercase mb-3 text-center">Tria la dificultat:</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="preStartGame(1)" class="difficulty-btn bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-bold transition">Fàcil</button>
+                <button onclick="preStartGame(2)" class="difficulty-btn bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-lg font-bold transition">Intermedi</button>
+                <button onclick="preStartGame(3)" class="difficulty-btn bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-bold transition">Expert</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Previsualització -->
+    <div id="preview-modal" class="modal hidden">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-4xl w-full">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 id="preview-title" class="text-xl font-bold text-gray-800 uppercase">Cartes</h2>
+                <button onclick="closePreview()" class="text-gray-400 hover:text-red-500 p-1 text-2xl font-bold">&times;</button>
+            </div>
+            <div id="preview-container" class="preview-grid"></div>
+            <div class="mt-6 text-center">
+                <button onclick="closePreview()" class="bg-gray-800 text-white px-8 py-2 rounded-lg font-bold">Tancar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Fi de Joc -->
+    <div id="game-over-modal" class="modal modal-top hidden">
+        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full text-center border-t-8" id="modal-border">
+            <h2 id="winner-text" class="text-3xl font-bold mb-2"></h2>
+            <p id="winner-reason" class="text-gray-600 mb-6"></p>
+            <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold w-full transition">Torna a jugar</button>
+        </div>
+    </div>
+
+    <script>
+        // --- BASE DE DADES DE CARTES SEGONS DOCUMENTS ---
+
+        const DECK_BASE = [
+            { name: "Tigre", icon: "🐅", moves: [[0, 2], [0, -1]] },
+            { name: "Drac", icon: "🐉", moves: [[-2, 1], [2, 1], [-1, -1], [1, -1]] },
+            { name: "Granota", icon: "🐸", moves: [[-2, 0], [-1, 1], [1, -1]] },
+            { name: "Conill", icon: "🐇", moves: [[1, 1], [2, 0], [-1, -1]] },
+            { name: "Mico", icon: "🐒", moves: [[-1, 1], [1, 1], [-1, -1], [1, -1]] },
+            { name: "Elefant", icon: "🐘", moves: [[-1, 1], [1, 1], [-1, 0], [1, 0]] },
+            { name: "Oca", icon: "🦢", moves: [[-1, 1], [-1, 0], [1, 0], [1, -1]] },
+            { name: "Gall", icon: "🐓", moves: [[1, 1], [1, 0], [-1, 0], [-1, -1]] },
+            { name: "Cranc", icon: "🦀", moves: [[0, 1], [-2, 0], [2, 0]] },
+            { name: "Senglar", icon: "🐗", moves: [[0, 1], [-1, 0], [1, 0]] },
+            { name: "Cavall", icon: "🐎", moves: [[0, 1], [-1, 0], [0, -1]] },
+            { name: "Bou", icon: "🐂", moves: [[0, 1], [1, 0], [0, -1]] },
+            { name: "Grua", icon: "🦢", moves: [[0, 1], [-1, -1], [1, -1]] },
+            { name: "Mantis", icon: "🦗", moves: [[-1, 1], [1, 1], [0, -1]] },
+            { name: "Anguila", icon: "🐍", moves: [[-1, 1], [1, 0], [-1, -1]] },
+            { name: "Cobra", icon: "🐍", moves: [[1, 1], [-1, 0], [1, -1]] }
+        ];
+
+        const DECK_SENSEI = [
+            { name: "Guineu", icon: "🦊", moves: [[1, 1], [1, 0], [1, -1]] },
+            { name: "Gos", icon: "🐕", moves: [[-1, 1], [-1, 0], [-1, -1]] },
+            { name: "Girafa", icon: "🦒", moves: [[-2, 1], [2, 1], [0, -1]] },
+            { name: "Panda", icon: "🐼", moves: [[0, 1], [1, 1], [-1, -1]] },
+            { name: "Ós", icon: "🐻", moves: [[0, 1], [-1, 1], [1, -1]] },
+            { name: "Kirin", icon: "🦄", moves: [[-1, 2], [1, 2], [0, -2]] },
+            { name: "Serp Marina", icon: "🐍", moves: [[0, 1], [1, 0], [-1, -1]] },
+            { name: "Víbora", icon: "🐍", moves: [[0, 1], [-2, 0], [1, -1]] },
+            { name: "Fènix", icon: "🐦", moves: [[-2, 0], [-1, 1], [1, 1], [2, 0]] },
+            { name: "Ratolí", icon: "🐭", moves: [[0, 1], [1, 0], [-1, -1]] },
+            { name: "Rata", icon: "🐀", moves: [[0, 1], [-1, 1], [1, 0]] },
+            { name: "Tortuga", icon: "🐢", moves: [[-2, -1], [-1, -2], [1, -2], [2, -1]] },
+            { name: "Tanuki", icon: "🦝", moves: [[0, 1], [2, 1], [-1, -1]] },
+            { name: "Iguana", icon: "🦎", moves: [[0, 1], [-2, 1], [1, -1]] },
+            { name: "Marta", icon: "🐿️", moves: [[1, 1], [-2, 0], [-1, -1]] },
+            { name: "Llúdriga", icon: "🦦", moves: [[-1, 1], [2, 0], [1, -1]] }
+        ];
+
+        let ALL_CARDS = [];
+        let board = Array(5).fill(null).map(() => Array(5).fill(null));
+        let playerHand = [];
+        let cpuHand = [];
+        let sideCard = null;
+        let selectedPiece = null;
+        let selectedCard = null;
+        let currentPlayer = "player";
+        let difficulty = 1;
+        let lastMove = null;
+        let isAnimating = false;
+
+        // --- FUNCIONS UI ---
+
+        function validateStart() {
+            const checked = document.querySelectorAll('.deck-checkbox:checked');
+            const btns = document.querySelectorAll('.difficulty-btn');
+            btns.forEach(b => b.disabled = checked.length === 0);
+        }
+
+        function openPreview(deckKey) {
+            const deck = deckKey === 'base' ? DECK_BASE : DECK_SENSEI;
+            document.getElementById('preview-title').innerText = deckKey === 'base' ? 'Joc Base' : 'La Senda del Sensei';
+            const container = document.getElementById('preview-container');
+            container.innerHTML = '';
+            deck.forEach(card => container.appendChild(createCardUI(card, "preview", false)));
+            document.getElementById('preview-modal').classList.remove('hidden');
+        }
+
+        function closePreview() { document.getElementById('preview-modal').classList.add('hidden'); }
+
+        function preStartGame(diff) {
+            const checkboxes = document.querySelectorAll('.deck-checkbox:checked');
+            ALL_CARDS = [];
+            checkboxes.forEach(cb => {
+                if (cb.value === 'base') ALL_CARDS.push(...DECK_BASE);
+                if (cb.value === 'sensei') ALL_CARDS.push(...DECK_SENSEI);
+            });
+            startGame(diff);
+        }
+
+        function startGame(diff) {
+            difficulty = diff;
+            document.getElementById('display-difficulty').innerText = diff;
+            document.getElementById('start-modal').classList.add('hidden');
+            document.getElementById('game-container').classList.remove('hidden');
+            setupGame();
+            render();
+        }
+
+        // --- LÒGICA DE JOC ---
+
+        function setupGame() {
+            const shuffled = [...ALL_CARDS].sort(() => Math.random() - 0.5);
+            playerHand = [shuffled[0], shuffled[1]];
+            cpuHand = [shuffled[2], shuffled[3]];
+            sideCard = shuffled[4];
+            // En Onitama, el color de la carta inicial determina qui comença (establert manualment per la simplicitat de l'exemple)
+            currentPlayer = "player"; 
+            board[0] = ["red-p", "red-p", "red-m", "red-p", "red-p"];
+            board[4] = ["player-p", "player-p", "player-m", "player-p", "player-p"];
+            if (currentPlayer === "cpu") setTimeout(makeCPUMove, 1000);
+        }
+
+        function render() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    if (r === 0 && c === 2) cell.classList.add('temple-red');
+                    if (r === 4 && c === 2) cell.classList.add('temple-player');
+
+                    if (lastMove) {
+                        if ((lastMove.from.r === r && lastMove.from.c === c) || (lastMove.to.r === r && lastMove.to.c === c)) {
+                            cell.classList.add(lastMove.player === 'player' ? 'last-move-player' : 'last-move-cpu');
+                        }
+                    }
+
+                    const pieceData = board[r][c];
+                    if (pieceData) {
+                        const [color, type] = pieceData.split('-');
+                        const piece = document.createElement('div');
+                        piece.className = `piece ${color} ${type === 'm' ? 'master' : ''}`;
+                        piece.innerText = type === 'm' ? '⛩️' : '👤';
+                        if (selectedPiece && selectedPiece.r === r && selectedPiece.c === c) piece.classList.add('selected');
+                        cell.appendChild(piece);
+                    }
+
+                    if (selectedPiece && selectedCard && currentPlayer === "player" && !isAnimating) {
+                        if (getValidMoves(selectedPiece.r, selectedPiece.c, selectedCard, "player").some(m => m.r === r && m.c === c)) {
+                            cell.classList.add('valid-move');
+                        }
+                    }
+                    cell.onclick = () => handleCellClick(r, c);
+                    boardEl.appendChild(cell);
+                }
+            }
+            renderCards();
+            updateUI();
+        }
+
+        function renderCards() {
+            const pArea = document.getElementById('player-cards');
+            pArea.innerHTML = '';
+            playerHand.forEach((card, i) => {
+                const cardUI = createCardUI(card, "player", i === selectedCard?.idx);
+                cardUI.id = `player-card-${i}`;
+                pArea.appendChild(cardUI);
+            });
+
+            const cArea = document.getElementById('cpu-cards');
+            cArea.innerHTML = '';
+            cpuHand.forEach((card, i) => {
+                const cardUI = createCardUI(card, "cpu", false);
+                cardUI.id = `cpu-card-${i}`;
+                cArea.appendChild(cardUI);
+            });
+
+            const lSlot = document.getElementById('left-slot');
+            const rSlot = document.getElementById('right-slot');
+            [...lSlot.children, ...rSlot.children].forEach(child => { if (!child.classList.contains('label-side')) child.remove(); });
+
+            const sideUI = createCardUI(sideCard, "side", false);
+            sideUI.id = "side-card-ui";
+            if (currentPlayer === "player") rSlot.appendChild(sideUI);
+            else { sideUI.classList.add('inverted'); lSlot.appendChild(sideUI); }
+        }
+
+        function createCardUI(card, type, isSelected) {
+            const el = document.createElement('div');
+            el.className = `card ${isSelected ? 'selected' : ''} ${type === 'cpu' ? 'cpu-card' : ''} ${type === 'side' ? 'side-card' : ''}`;
+            
+            const content = document.createElement('div');
+            content.className = 'card-content';
+
+            const header = document.createElement('div');
+            header.className = 'card-header';
+            const silhouette = document.createElement('span');
+            silhouette.className = 'card-silhouette-small';
+            silhouette.innerText = card.icon;
+            const title = document.createElement('span');
+            title.className = 'text-[10px] font-bold uppercase truncate';
+            title.innerText = card.name;
+            header.appendChild(silhouette);
+            header.appendChild(title);
+            content.appendChild(header);
+
+            const grid = document.createElement('div');
+            grid.className = 'mini-grid';
+            for (let i = 0; i < 25; i++) {
+                const r = Math.floor(i / 5);
+                const c = i % 5;
+                const cell = document.createElement('div');
+                cell.className = 'mini-cell';
+                if (r === 2 && c === 2) cell.classList.add('center');
+                
+                card.moves.forEach(m => {
+                    const mr = type === 'cpu' ? 2 + m[1] : 2 - m[1];
+                    const mc = type === 'cpu' ? -m[0] + 2 : m[0] + 2;
+                    if (mr === r && mc === c) cell.classList.add('move');
+                });
+                grid.appendChild(cell);
+            }
+            content.appendChild(grid);
+            el.appendChild(content);
+
+            if (type === "player" && currentPlayer === "player" && !isAnimating) {
+                el.onclick = (e) => {
+                    e.stopPropagation();
+                    if (selectedCard?.idx === playerHand.indexOf(card)) selectedCard = null;
+                    else selectedCard = { ...card, idx: playerHand.indexOf(card) };
+                    render();
+                };
+            }
+            return el;
+        }
+
+        function updateUI() {
+            const indicator = document.getElementById('turn-indicator');
+            if (currentPlayer === "player") {
+                indicator.innerText = "És el teu torn";
+                indicator.className = "mb-2 text-sm text-blue-600 font-bold animate-pulse";
+            } else if (currentPlayer === "cpu") {
+                indicator.innerText = "La CPU està pensant...";
+                indicator.className = "mb-2 text-sm text-red-600 font-bold";
+            }
+        }
+
+        function handleCellClick(r, c) {
+            if (currentPlayer !== "player" || isAnimating) return;
+            const piece = board[r][c];
+            if (piece && piece.startsWith("player")) {
+                selectedPiece = { r, c };
+                render();
+                return;
+            }
+            if (selectedPiece && selectedCard) {
+                const moves = getValidMoves(selectedPiece.r, selectedPiece.c, selectedCard, "player");
+                const move = moves.find(m => m.r === r && m.c === c);
+                if (move) executeMove("player", selectedPiece, move, selectedCard.idx);
+            }
+        }
+
+        function getValidMoves(r, c, card, player) {
+            const moves = [];
+            card.moves.forEach(m => {
+                const dr = player === "player" ? -m[1] : m[1];
+                const dc = player === "player" ? m[0] : -m[0];
+                const nr = r + dr;
+                const nc = c + dc;
+                if (nr >= 0 && nr < 5 && nc >= 0 && nc < 5) {
+                    const target = board[nr][nc];
+                    if (!target || !target.startsWith(player === "player" ? "player" : "red")) moves.push({ r: nr, c: nc });
+                }
+            });
+            return moves;
+        }
+
+        async function executeMove(player, from, to, cardIdx) {
+            isAnimating = true;
+            const movingPiece = board[from.r][from.c];
+            const targetPiece = board[to.r][to.c];
+            selectedPiece = null;
+            selectedCard = null;
+            lastMove = { from: { ...from }, to: { ...to }, player };
+            board[to.r][to.c] = movingPiece;
+            board[from.r][from.c] = null;
+            render();
+            await animateCardSwap(player, cardIdx);
+            checkWin(movingPiece, targetPiece, to);
+            if (currentPlayer !== "none") {
+                currentPlayer = (player === "player") ? "cpu" : "player";
+                isAnimating = false;
+                render();
+                if (currentPlayer === "cpu") setTimeout(makeCPUMove, 800);
+            }
+        }
+
+        async function animateCardSwap(player, cardIdx) {
+            const usedCardId = player === "player" ? `player-card-${cardIdx}` : `cpu-card-${cardIdx}`;
+            const targetSlotId = player === "player" ? "left-slot" : "right-slot"; 
+            const usedCardEl = document.getElementById(usedCardId);
+            const sideCardEl = document.getElementById("side-card-ui");
+            const targetSlotEl = document.getElementById(targetSlotId);
+            if (!usedCardEl || !sideCardEl || !targetSlotEl) return;
+            await moveElement(usedCardEl, targetSlotEl);
+            const hand = player === "player" ? playerHand : cpuHand;
+            const usedCardData = hand[cardIdx];
+            await moveElement(sideCardEl, usedCardEl.parentElement);
+            hand[cardIdx] = sideCard;
+            sideCard = usedCardData;
+        }
+
+        function moveElement(el, targetParent) {
+            return new Promise(resolve => {
+                const startRect = el.getBoundingClientRect();
+                const targetRect = targetParent.getBoundingClientRect();
+                const deltaX = (targetRect.left + targetRect.width/2) - (startRect.left + startRect.width/2);
+                const deltaY = (targetRect.top + targetRect.height/2) - (startRect.top + startRect.height/2);
+                el.style.transition = "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s";
+                el.style.transform = `translate(${deltaX}px, ${deltaY}px) ${el.classList.contains('cpu-card') ? 'rotate(180deg)' : ''}`;
+                el.style.opacity = "0.7";
+                setTimeout(() => resolve(), 650);
+            });
+        }
+
+        function checkWin(movingPiece, capturedPiece, pos) {
+            if (capturedPiece && capturedPiece.endsWith("-m")) endGame(movingPiece.startsWith("player") ? "player" : "cpu", "S'ha capturat el mestre o la mestra rival.");
+            if (movingPiece === "player-m" && pos.r === 0 && pos.c === 2) endGame("player", "Has arribat al temple rival.");
+            if (movingPiece === "red-m" && pos.r === 4 && pos.c === 2) endGame("cpu", "La CPU ha arribat al teu temple.");
+        }
+
+        function endGame(winner, reason) {
+            const modal = document.getElementById('game-over-modal');
+            const border = document.getElementById('modal-border');
+            const text = document.getElementById('winner-text');
+            const reasonEl = document.getElementById('winner-reason');
+            text.innerText = winner === "player" ? "HAS GUANYAT!" : "HAS PERDUT...";
+            border.style.borderColor = winner === "player" ? "var(--player-theme)" : "var(--cpu-red)";
+            text.className = winner === "player" ? "text-3xl font-bold mb-2 text-blue-600" : "text-3xl font-bold mb-2 text-red-600";
+            reasonEl.innerText = reason;
+            modal.classList.remove('hidden');
+            currentPlayer = "none";
+            isAnimating = false;
+        }
+
+        // --- IA ---
+
+        function makeCPUMove() {
+            if (currentPlayer !== "cpu" || isAnimating) return;
+            let moves = getAllPossibleMoves("cpu");
+            if (moves.length === 0) {
+                animateCardSwap("cpu", 0).then(() => { currentPlayer = "player"; render(); });
+                return;
+            }
+            let bestMove;
+            if (difficulty === 1) bestMove = moves[Math.floor(Math.random() * moves.length)];
+            else if (difficulty === 2) bestMove = getBestDefensiveMove(moves);
+            else bestMove = getMinimaxMove(moves);
+            executeMove("cpu", bestMove.from, bestMove.to, bestMove.cardIdx);
+        }
+
+        function getAllPossibleMoves(player) {
+            const moves = [];
+            const hand = player === "player" ? playerHand : cpuHand;
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    const piece = board[r][c];
+                    if (piece && piece.startsWith(player === "player" ? "player" : "red")) {
+                        hand.forEach((card, cardIdx) => {
+                            getValidMoves(r, c, card, player).forEach(v => moves.push({ from: { r, c }, to: v, cardIdx, card }));
+                        });
+                    }
+                }
+            }
+            return moves;
+        }
+
+        function getBestDefensiveMove(moves) {
+            const scoredMoves = moves.map(m => ({ move: m, score: evaluatePosition(m, true) }));
+            scoredMoves.sort((a, b) => b.score - a.score);
+            return scoredMoves[0].move;
+        }
+
+        function evaluatePosition(move, checkSafety = false) {
+            let score = Math.random() * 5; 
+            const target = board[move.to.r][move.to.c];
+            const isMaster = board[move.from.r][move.from.c] === "red-m";
+            if (target === "player-m") score += 5000;
+            if (target === "player-p") score += 30;
+            if (isMaster) {
+                const distNew = Math.abs(move.to.r - 4) + Math.abs(move.to.c - 2);
+                const distOld = Math.abs(move.from.r - 4) + Math.abs(move.from.c - 2);
+                if (distNew < distOld) score += 15;
+                if (move.to.r === 4 && move.to.c === 2) score += 4000;
+            }
+            if (checkSafety) {
+                const oldTo = board[move.to.r][move.to.c];
+                const oldFrom = board[move.from.r][move.from.c];
+                board[move.to.r][move.to.c] = oldFrom;
+                board[move.from.r][move.from.c] = null;
+                const masterPos = findPiece("red-m");
+                if (masterPos && isSquareAttacked(masterPos.r, masterPos.c, "player")) score -= 1500;
+                board[move.from.r][move.from.c] = oldFrom;
+                board[move.to.r][move.to.c] = oldTo;
+            }
+            return score;
+        }
+
+        function findPiece(pieceId) {
+            for(let r=0; r<5; r++) for(let c=0; c<5; c++) if (board[r][c] === pieceId) return {r, c};
+            return null;
+        }
+
+        function isSquareAttacked(r, c, attacker) {
+            const hand = attacker === "player" ? playerHand : cpuHand;
+            for (let i = 0; i < 5; i++) {
+                for (let j = 0; j < 5; j++) {
+                    const piece = board[i][j];
+                    if (piece && piece.startsWith(attacker === "player" ? "player" : "red")) {
+                        for (const card of hand) if (getValidMoves(i, j, card, attacker).some(m => m.r === r && m.c === c)) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function getMinimaxMove(moves) {
+            let best = -Infinity;
+            let choice = moves[0];
+            moves.forEach(m => {
+                const oldTo = board[m.to.r][m.to.c];
+                const oldFrom = board[m.from.r][m.from.c];
+                board[m.to.r][m.to.c] = oldFrom;
+                board[m.from.r][m.from.c] = null;
+                const playerMoves = getAllPossibleMoves("player");
+                let maxPlayerScore = playerMoves.length > 0 ? -Infinity : 0;
+                playerMoves.forEach(pm => {
+                    const s = evaluatePosition(pm, false);
+                    if (s > maxPlayerScore) maxPlayerScore = s;
+                });
+                const currentScore = evaluatePosition(m, true) - (maxPlayerScore * 0.6);
+                if (currentScore > best) { best = currentScore; choice = m; }
+                board[m.from.r][m.from.c] = oldFrom;
+                board[m.to.r][m.to.c] = oldTo;
+            });
+            return choice;
+        }
+
+        window.onload = validateStart;
+    </script>
+</body>
+</html>
