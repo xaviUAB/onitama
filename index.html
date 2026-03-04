@@ -16,30 +16,62 @@
             --wind-cyan-light: rgba(6, 182, 212, 0.3);
             --card-move-color: #fdba74;
             --cell-size: clamp(45px, 12vw, 70px);
+            --jp-gold: #d4af37;
+            --jp-parchment: #fdf6e3;
+            --jp-wood: #5d4037;
         }
 
         body {
-            background-color: #f3f4f6;
+            background-color: #d1d5db;
+            background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
             overflow-x: hidden;
         }
 
-        .game-layout {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.5rem;
-            width: 100%;
-            max-width: 1100px;
-            padding-top: 20px;
+        /* Estètica Japonesa Immersiva */
+        .jp-main-container {
+            background: var(--jp-parchment);
+            background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+            border: 10px double var(--jp-wood);
+            box-shadow: inset 0 0 60px rgba(139, 69, 19, 0.2), 0 15px 35px rgba(0,0,0,0.4);
+            border-radius: 4px;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .jp-modal-content {
+            background: var(--jp-parchment);
+            background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+            border: 4px double var(--jp-gold);
+            position: relative;
+            box-shadow: 0 0 0 12px var(--jp-wood), 0 25px 50px rgba(0,0,0,0.6);
+        }
+
+        .jp-sun {
+            position: absolute;
+            top: -45px;
+            right: -45px;
+            width: 130px;
+            height: 130px;
+            background: rgba(220, 38, 38, 0.25);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .cherry-blossom {
+            position: absolute;
+            font-size: 1.8rem;
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 0;
         }
 
         .board-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 1.5rem;
+            gap: 2rem;
             width: 100%;
         }
 
@@ -49,10 +81,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px dashed #d1d5db;
-            border-radius: 12px;
+            border: 2px dashed var(--jp-wood);
+            border-radius: 8px;
             position: relative;
-            background-color: rgba(0,0,0,0.02);
+            background-color: rgba(93, 64, 55, 0.08);
         }
 
         .board-grid {
@@ -60,14 +92,14 @@
             grid-template-columns: repeat(5, var(--cell-size));
             grid-template-rows: repeat(5, var(--cell-size));
             gap: 4px;
-            background-color: #9ca3af;
-            padding: 4px;
-            border-radius: 8px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            background-color: var(--jp-wood);
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
 
         .cell {
-            background-color: white;
+            background-color: #fffdfa;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -76,34 +108,35 @@
             transition: background-color 0.2s;
         }
 
+        /* Ressaltats */
         .last-move-player { background-color: var(--player-theme-light) !important; }
         .last-move-cpu { background-color: var(--cpu-red-light) !important; }
         .last-move-wind { background-color: var(--wind-cyan-light) !important; }
 
         .cell.valid-move::after {
             content: '';
-            width: 35%;
-            height: 35%;
-            background-color: rgba(255, 255, 255, 0.9);
-            border: 2px solid rgba(0,0,0,0.3);
+            width: 38%;
+            height: 38%;
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 2px solid rgba(0,0,0,0.25);
             border-radius: 50%;
             position: absolute;
             z-index: 30;
             pointer-events: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.25);
         }
 
-        .cell.temple-player { border-top: 4px solid var(--player-theme); }
-        .cell.temple-red { border-bottom: 4px solid var(--cpu-red); }
+        .cell.temple-player { border-top: 6px solid var(--player-theme); }
+        .cell.temple-red { border-bottom: 6px solid var(--cpu-red); }
 
         .piece {
-            width: 80%;
-            height: 80%;
+            width: 84%;
+            height: 84%;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.7rem;
             z-index: 10;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -111,47 +144,49 @@
         .piece.master { border-radius: 15% 15% 50% 50%; font-weight: bold; }
         .piece.player { background-color: var(--player-theme); color: white; border: 3px solid #1e3a8a; }
         .piece.red { background-color: var(--cpu-red); color: white; border: 3px solid #991b1b; }
-        .piece.wind { background-color: var(--wind-cyan); color: white; border: 3px solid #0891b2; font-size: 1.2rem; }
+        .piece.wind { background-color: var(--wind-cyan); color: white; border: 3px solid #0891b2; font-size: 1.4rem; }
         
         .piece.selected {
-            transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            transform: scale(1.18);
+            box-shadow: 0 0 18px rgba(0,0,0,0.7);
             border-color: #fbbf24;
         }
 
         .card {
             width: 140px;
             height: 200px;
-            padding: 6px;
-            border: 2px solid #d1d5db;
-            border-radius: 8px;
+            padding: 8px;
+            border: 2px solid #a8a29e;
+            border-radius: 6px;
             background: white;
             display: flex;
             flex-direction: column;
             align-items: center;
             cursor: pointer;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s, border-color 0.2s;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s, border-color 0.2s;
             position: relative;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 8px rgba(0, 0, 0, 0.18);
             z-index: 50;
         }
 
         .card.selected {
             border-color: var(--player-theme);
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
-            transform: translateY(-8px);
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.6);
+            transform: translateY(-12px);
         }
 
         .card-header {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 5px;
             width: 100%;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
+            border-bottom: 1px solid #f1f1f1;
+            padding-bottom: 3px;
         }
 
-        .card-silhouette-small { font-size: 1rem; filter: grayscale(1) brightness(0); }
+        .card-silhouette-small { font-size: 1.15rem; filter: grayscale(1) brightness(0); }
 
         .card-content {
             position: relative;
@@ -170,14 +205,14 @@
             width: 90px;
             height: 90px;
             gap: 1px;
-            background: #eee;
+            background: #d1d5db;
             position: relative;
         }
 
         .mini-grid-wind { width: 65px; height: 65px; }
 
         .mini-cell { 
-            background: white; 
+            background: #ffffff; 
             z-index: 1; 
             display: flex;
             align-items: center;
@@ -189,10 +224,10 @@
         .mini-cell.move { background: var(--card-move-color); z-index: 10; position: relative; }
         .mini-cell.move-wind { background: var(--wind-cyan); z-index: 10; position: relative; }
 
-        .card-divider { width: 100%; height: 1px; background-color: #e5e7eb; margin: 4px 0; }
+        .card-divider { width: 100%; height: 1px; background-color: #e5e7eb; margin: 5px 0; }
 
         .modal {
-            background-color: rgba(0,0,0,0.7);
+            background-color: rgba(0,0,0,0.85);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -201,171 +236,177 @@
             z-index: 100;
         }
 
-        .modal-top { align-items: flex-start; padding-top: 5vh; }
+        .modal-top { align-items: flex-start; padding-top: 7vh; }
         .cpu-card { transform: rotate(180deg); }
         .inverted { transform: rotate(180deg); }
 
         .label-side {
             position: absolute;
-            top: -25px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            color: #9ca3af;
+            top: -30px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: var(--jp-wood);
             text-transform: uppercase;
+            letter-spacing: 0.15em;
             white-space: nowrap;
         }
 
-        .difficulty-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+        .difficulty-btn:disabled { opacity: 0.35; cursor: not-allowed; filter: grayscale(1); }
 
         .deck-option {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            padding: 10px;
-            border: 1px solid #e5e7eb;
+            padding: 14px;
+            border: 2px solid #d4af37;
             border-radius: 10px;
             transition: all 0.2s;
+            background: white;
+            z-index: 1;
         }
-        .deck-option:has(input:checked) { border-color: var(--player-theme); background-color: #f0f7ff; }
+        .deck-option:has(input:checked) { border-color: #b91c1c; background-color: #fffaf0; }
 
         .preview-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 1rem;
-            padding: 1rem;
-            max-height: 70vh;
+            gap: 1.8rem;
+            padding: 1.8rem;
+            max-height: 68vh;
             overflow-y: auto;
         }
 
         .wind-indicator {
             background: var(--wind-cyan);
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            margin-bottom: 8px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.6; }
-            100% { opacity: 1; }
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 900;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(6, 182, 212, 0.45);
+            border: 2px solid rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
     </style>
 </head>
 <body class="p-4 flex flex-col items-center min-h-screen">
 
-    <div id="game-container" class="game-layout hidden">
+    <div id="game-container" class="game-layout jp-main-container hidden">
+        <span class="cherry-blossom" style="top:3%; left:3%">🌸</span>
+        <span class="cherry-blossom" style="bottom:3%; right:3%">🌸</span>
+        
         <!-- Àrea CPU -->
         <div class="flex flex-col items-center gap-2">
-            <h2 class="text-red-600 font-bold uppercase tracking-widest text-sm">CPU (Nivell <span id="display-difficulty">1</span>)</h2>
+            <h2 class="text-red-900 font-black uppercase tracking-[0.3em] text-xs">Escola Rival (Nivell <span id="display-difficulty">1</span>)</h2>
             <div id="cpu-cards" class="flex gap-4"></div>
         </div>
 
         <!-- Zona central -->
-        <div class="flex flex-col items-center">
-            <div id="wind-status" class="wind-indicator hidden">Mou l'Esperit del Vent</div>
+        <div class="flex flex-col items-center w-full my-4">
+            <div id="wind-status" class="wind-indicator hidden">🌀 Mou l'Esperit del Vent</div>
             <div class="board-container">
-                <div id="left-slot" class="side-slot"><span class="label-side">Següent CPU</span></div>
+                <div id="left-slot" class="side-slot"><span class="label-side">Següent Rival</span></div>
                 <div id="board" class="board-grid"></div>
-                <div id="right-slot" class="side-slot"><span class="label-side">Següent Persona</span></div>
+                <div id="right-slot" class="side-slot"><span class="label-side">Següent Tu</span></div>
             </div>
         </div>
 
         <!-- Àrea Persona que Juga -->
         <div class="flex flex-col items-center gap-2">
-            <div class="mb-2 text-sm text-gray-600" id="turn-indicator">És el teu torn</div>
+            <div class="mb-2 text-sm text-stone-700 italic font-bold tracking-tight" id="turn-indicator">Carregant forces...</div>
             <div id="player-cards" class="flex gap-4"></div>
-            <h2 class="text-blue-600 font-bold uppercase tracking-widest text-sm mt-2">Persona que Juga</h2>
+            <h2 class="text-blue-900 font-black uppercase tracking-[0.3em] text-xs mt-2">La Teva Escola</h2>
         </div>
     </div>
 
     <!-- Modal Inicial -->
     <div id="start-modal" class="modal">
-        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full text-center">
-            <h1 class="text-3xl font-bold mb-6 text-gray-800 tracking-tighter">ONITAMA</h1>
-            
-            <div class="mb-8 text-left">
-                <p class="text-xs font-bold text-gray-400 uppercase mb-3 text-center">Selecció de baralles</p>
-                <div class="flex flex-col gap-3">
-                    <div class="deck-option">
-                        <label class="flex items-center gap-3 cursor-pointer flex-grow">
-                            <input type="checkbox" class="deck-checkbox move-deck w-5 h-5 accent-blue-600" value="base" checked onchange="validateStart()">
-                            <span class="text-sm font-medium">Joc Base (18 cartes)</span>
-                        </label>
-                        <button onclick="openPreview('base')" class="text-gray-400 hover:text-blue-600 transition p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button>
+        <div class="jp-modal-content p-12 rounded-xl max-w-md w-full text-center">
+            <div class="jp-sun"></div>
+            <div class="relative z-10">
+                <div class="text-[11px] text-stone-600 mb-2 tracking-[0.6em] font-black uppercase">Onitama - Estratègia Pura</div>
+                <h1 class="text-5xl font-black mb-10 text-stone-900 tracking-tighter border-b-4 border-red-800 pb-4 inline-block">ONITAMA</h1>
+                
+                <div class="mb-10 text-left">
+                    <p class="text-[10px] font-black text-stone-500 uppercase mb-5 text-center tracking-[0.3em]">🌸 Selecció de Pergamins 🌸</p>
+                    <div class="flex flex-col gap-4">
+                        <div class="deck-option">
+                            <label class="flex items-center gap-4 cursor-pointer flex-grow">
+                                <input type="checkbox" id="check-base" class="deck-checkbox move-deck w-6 h-6 accent-red-800" value="base" onchange="validateStart()">
+                                <span class="text-sm font-black text-stone-800">Joc Base (18 cartes)</span>
+                            </label>
+                            <button onclick="openPreview('base')" class="text-stone-400 hover:text-red-800 transition p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button>
+                        </div>
+                        <div class="deck-option">
+                            <label class="flex items-center gap-4 cursor-pointer flex-grow">
+                                <input type="checkbox" id="check-sensei" class="deck-checkbox move-deck w-6 h-6 accent-red-800" value="sensei" onchange="validateStart()">
+                                <span class="text-sm font-black text-stone-800">Senda del Sensei (16 cartes)</span>
+                            </label>
+                            <button onclick="openPreview('sensei')" class="text-stone-400 hover:text-red-800 transition p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button>
+                        </div>
+                        <div class="deck-option">
+                            <label class="flex items-center gap-4 cursor-pointer flex-grow">
+                                <input type="checkbox" id="check-wind" class="deck-checkbox w-6 h-6 accent-cyan-600" value="wind" onchange="validateStart()">
+                                <span class="text-sm font-black text-cyan-900">El Camí del Vent (8 cartes)</span>
+                            </label>
+                            <button onclick="openPreview('wind')" class="text-cyan-400 hover:text-cyan-800 transition p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button>
+                        </div>
                     </div>
-                    <div class="deck-option">
-                        <label class="flex items-center gap-3 cursor-pointer flex-grow">
-                            <input type="checkbox" class="deck-checkbox move-deck w-5 h-5 accent-blue-600" value="sensei" onchange="validateStart()">
-                            <span class="text-sm font-medium">Senda del Sensei (16 cartes)</span>
-                        </label>
-                        <button onclick="openPreview('sensei')" class="text-gray-400 hover:text-blue-600 transition p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button>
-                    </div>
-                    <div class="deck-option">
-                        <label class="flex items-center gap-3 cursor-pointer flex-grow">
-                            <input type="checkbox" class="deck-checkbox w-5 h-5 accent-blue-600" value="wind" id="wind-checkbox" onchange="validateStart()">
-                            <span class="text-sm font-medium font-bold text-cyan-600">El Camí del Vent (8 cartes)</span>
-                        </label>
-                        <button onclick="openPreview('wind')" class="text-cyan-400 hover:text-cyan-600 transition p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button>
-                    </div>
+                    <p id="validation-msg" class="text-[11px] text-red-700 mt-3 text-center font-black uppercase hidden tracking-tighter">! Cal triar una baralla de moviment !</p>
                 </div>
-                <p id="validation-msg" class="text-[10px] text-red-500 mt-2 text-center hidden">* Selecciona almenys una baralla de moviments normals per jugar.</p>
-            </div>
 
-            <p class="text-xs font-bold text-gray-400 uppercase mb-3 text-center">Dificultat de la CPU</p>
-            <div class="flex flex-col gap-3">
-                <button id="btn-easy" onclick="preStartGame(1)" class="difficulty-btn bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-bold transition">Fàcil</button>
-                <button id="btn-med" onclick="preStartGame(2)" class="difficulty-btn bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-lg font-bold transition">Intermedi</button>
-                <button id="btn-exp" onclick="preStartGame(3)" class="difficulty-btn bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-bold transition">Expert</button>
+                <p class="text-[10px] font-black text-stone-500 uppercase mb-5 text-center tracking-[0.3em]">Repte de Combat</p>
+                <div class="grid grid-cols-1 gap-4">
+                    <button id="btn-easy" onclick="preStartGame(1)" class="difficulty-btn bg-stone-900 hover:bg-black text-white py-5 rounded-lg font-black transition shadow-2xl flex items-center justify-center gap-3 uppercase text-[11px] tracking-[0.2em]"><span>⛩️</span> Fàcil</button>
+                    <button id="btn-med" onclick="preStartGame(2)" class="difficulty-btn bg-stone-900 hover:bg-black text-white py-5 rounded-lg font-black transition shadow-2xl flex items-center justify-center gap-3 uppercase text-[11px] tracking-[0.2em]"><span>⛩️</span> Intermedi</button>
+                    <button id="btn-exp" onclick="preStartGame(3)" class="difficulty-btn bg-stone-900 hover:bg-black text-white py-5 rounded-lg font-black transition shadow-2xl flex items-center justify-center gap-3 uppercase text-[11px] tracking-[0.2em]"><span>⛩️</span> Expert</button>
+                </div>
+                <button onclick="showRules()" class="mt-10 text-stone-600 underline text-xs hover:text-stone-950 font-black tracking-widest uppercase">Tradició i Regles</button>
             </div>
-            <button onclick="showRules()" class="mt-6 text-blue-500 underline text-sm">Regles i ajudes</button>
         </div>
     </div>
 
     <!-- Modal de Previsualització -->
     <div id="preview-modal" class="modal hidden">
-        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-4xl w-full">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h2 id="preview-title" class="text-xl font-bold text-gray-800 uppercase tracking-tight">Cartes</h2>
-                <button onclick="closePreview()" class="text-gray-400 hover:text-red-500 p-1 text-2xl font-bold">&times;</button>
+        <div class="jp-modal-content p-10 rounded-2xl shadow-2xl max-w-4xl w-full">
+            <div class="flex justify-between items-center mb-8 border-b-2 border-stone-300 pb-5">
+                <h2 id="preview-title" class="text-3xl font-black text-stone-900 uppercase tracking-[0.2em]">Cartes</h2>
+                <button onclick="closePreview()" class="text-stone-400 hover:text-red-700 p-1 text-5xl font-bold">&times;</button>
             </div>
             <div id="preview-container" class="preview-grid"></div>
-            <div class="mt-4 text-center">
-                <button onclick="closePreview()" class="bg-gray-800 text-white px-8 py-2 rounded-lg font-bold">Tancar</button>
+            <div class="mt-10 text-center">
+                <button onclick="closePreview()" class="bg-red-900 text-white px-16 py-5 rounded-lg font-black shadow-2xl hover:bg-red-950 transition uppercase tracking-widest text-xs">Tancar Pergamí</button>
             </div>
         </div>
     </div>
 
     <!-- Modal de Regles -->
     <div id="rules-modal" class="modal hidden">
-        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto">
-            <h2 class="text-2xl font-bold mb-4">Regles d'Onitama</h2>
-            <div class="text-left text-sm space-y-4 text-gray-700 leading-relaxed">
-                <p><strong>Objectiu:</strong> Captura el líder rival o porta el teu líder al temple rival.</p>
-                <p><strong>El Camí del Vent:</strong> Requereix 3 cartes de moviment normal i 2 d'esperit. Si jugues una carta d'esperit, primer mous la teva peça i després l'<strong>Esperit del Vent</strong>.</p>
-                <p><strong>Mecànica del Vent:</strong> L'esperit és neutral. Si mou a una casella ocupada, intercanvia la seva posició amb la peça que hi havia.</p>
-                <p><strong>Flux:</strong> En acabar les accions d'una carta, es deixa al lateral i es recull la que hi havia.</p>
+        <div class="jp-modal-content p-12 rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto">
+            <h2 class="text-4xl font-black mb-8 text-red-950 border-b-2 border-stone-300 pb-4 flex items-center gap-4"><span>📜</span> Regles</h2>
+            <div class="text-left text-sm space-y-6 text-stone-900 leading-relaxed font-bold">
+                <p><strong>L'Objectiu Sagrat:</strong> Captura el líder rival o porta el teu líder al temple de l'adversari (la casella central oposada).</p>
+                <p><strong>El Vent Celestial:</strong> Si jugues una carta dual (d'esperit), mous primer la teva peça i després l'<strong>Esperit del Vent</strong>. L'intercanvi de cartes només es completa en finalitzar ambdues accions.</p>
+                <p><strong>Intercanvi d'Ànimes:</strong> L'esperit és neutral. Si aquest mou a una casella ocupada, intercanviarà el lloc amb la peça que hi resideixi.</p>
+                <p><strong>El Cicle Eternal:</strong> En tancar el torn, la carta jugada s'entrega al rival i tu heretes la que reposava al lateral.</p>
             </div>
-            <button onclick="closeRules()" class="mt-6 bg-gray-800 text-white px-6 py-2 rounded-lg">D'acord</button>
+            <button onclick="closeRules()" class="mt-12 bg-stone-950 text-white px-10 py-5 rounded-xl w-full font-black hover:bg-black transition uppercase tracking-widest text-xs shadow-2xl">Entès</button>
         </div>
     </div>
 
     <!-- Modal Fi de Joc -->
     <div id="game-over-modal" class="modal modal-top hidden">
-        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full text-center border-t-8" id="modal-border">
-            <h2 id="winner-text" class="text-3xl font-bold mb-2"></h2>
-            <p id="winner-reason" class="text-gray-600 mb-6"></p>
-            <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold w-full transition">Torna a jugar</button>
+        <div class="jp-modal-content p-14 rounded-2xl shadow-2xl max-w-sm w-full text-center border-t-[10px]" id="modal-border">
+            <h2 id="winner-text" class="text-5xl font-black mb-6 tracking-tighter"></h2>
+            <p id="winner-reason" class="text-stone-800 mb-12 italic text-xl font-bold"></p>
+            <button onclick="showStartModal()" class="bg-red-900 hover:bg-red-950 text-white px-14 py-6 rounded-2xl font-black w-full transition shadow-2xl uppercase tracking-widest text-xs">Nova Partida</button>
         </div>
     </div>
 
     <script>
         // --- BASE DE DADES DE CARTES ---
-
         const DECK_BASE = [
             { name: "Tigre", icon: "🐅", moves: [[0, 2], [0, -1]], set: "base" },
             { name: "Drac", icon: "🐉", moves: [[-2, 1], [2, 1], [-1, -1], [1, -1]], set: "base" },
@@ -417,6 +458,7 @@
             { name: "Àliga", icon: "🦅", moves: [[-1, 2], [1, 2], [0, 1]], windMoves: [[-2, 0], [2, 0]], set: "wind" }
         ];
 
+        // --- ESTAT DEL JOC ---
         let board = Array(5).fill(null).map(() => Array(5).fill(null));
         let playerHand = [];
         let cpuHand = [];
@@ -432,66 +474,66 @@
         let windPos = { r: 2, c: 2 };
         let windEnabled = false;
 
+        // Persistència de la sessió
+        let gameSettings = { base: true, sensei: false, wind: false };
+
         // --- FUNCIONS UI ---
+        function showStartModal() {
+            document.getElementById('game-over-modal').classList.add('hidden');
+            document.getElementById('game-container').classList.add('hidden');
+            document.getElementById('start-modal').classList.remove('hidden');
+            document.getElementById('check-base').checked = gameSettings.base;
+            document.getElementById('check-sensei').checked = gameSettings.sensei;
+            document.getElementById('check-wind').checked = gameSettings.wind;
+            validateStart();
+        }
 
         function validateStart() {
             const normalChecked = document.querySelectorAll('.move-deck:checked');
             const btns = document.querySelectorAll('.difficulty-btn');
             const validationMsg = document.getElementById('validation-msg');
-            
-            // Segons les regles del Camí del Vent, necessitem 3 move cards normals. 
-            // Per tant, cal almenys una baralla normal activa.
+            gameSettings.base = document.getElementById('check-base').checked;
+            gameSettings.sensei = document.getElementById('check-sensei').checked;
+            gameSettings.wind = document.getElementById('check-wind').checked;
             const isValid = normalChecked.length > 0;
-            
             btns.forEach(b => b.disabled = !isValid);
             if (!isValid) validationMsg.classList.remove('hidden');
             else validationMsg.classList.add('hidden');
         }
 
         function openPreview(deckKey) {
-            let deck;
-            if(deckKey === 'base') deck = DECK_BASE;
-            else if(deckKey === 'sensei') deck = DECK_SENSEI;
-            else deck = DECK_WIND;
-            
-            document.getElementById('preview-title').innerText = deckKey === 'wind' ? 'El Camí del Vent' : 'Cartes';
+            let deck = deckKey === 'base' ? DECK_BASE : (deckKey === 'sensei' ? DECK_SENSEI : DECK_WIND);
+            document.getElementById('preview-title').innerText = deckKey === 'wind' ? 'El Camí del Vent' : 'Cartes de Tradició';
             const container = document.getElementById('preview-container');
             container.innerHTML = '';
-            deck.forEach(card => container.appendChild(createCardUI(card, "preview", false)));
+            deck.forEach(card => {
+                const ui = createCardUI(card, "preview", false);
+                if(ui) container.appendChild(ui);
+            });
             document.getElementById('preview-modal').classList.remove('hidden');
         }
 
         function closePreview() { document.getElementById('preview-modal').classList.add('hidden'); }
 
         function preStartGame(diff) {
-            const checkboxes = Array.from(document.querySelectorAll('.deck-checkbox:checked')).map(cb => cb.value);
-            windEnabled = checkboxes.includes('wind');
-            
+            windEnabled = gameSettings.wind;
             let normalCards = [];
-            if (checkboxes.includes('base')) normalCards.push(...DECK_BASE);
-            if (checkboxes.includes('sensei')) normalCards.push(...DECK_SENSEI);
-
-            // Barregem
+            if (gameSettings.base) normalCards.push(...DECK_BASE);
+            if (gameSettings.sensei) normalCards.push(...DECK_SENSEI);
             let chosenNormal = normalCards.sort(() => 0.5 - Math.random());
             let chosenWind = [...DECK_WIND].sort(() => 0.5 - Math.random());
-
             if (windEnabled) {
-                // Setup Vent: 2 d'esperit + 3 normals (requereix normalCards.length >= 3)
-                let selectedWind = chosenWind.slice(0, 2);
-                let selectedNormal = chosenNormal.slice(0, 3);
-                
-                // Repartiment segons reglament
-                playerHand = [selectedWind[0], selectedNormal[0]];
-                cpuHand = [selectedWind[1], selectedNormal[1]];
-                sideCard = selectedNormal[2];
+                let sWind = chosenWind.slice(0, 2);
+                let sNorm = chosenNormal.slice(0, 3);
+                playerHand = [sWind[0], sNorm[0]];
+                cpuHand = [sWind[1], sNorm[1]];
+                sideCard = sNorm[2];
             } else {
-                // Setup normal: 5 de moviment
                 let selected = chosenNormal.slice(0, 5);
                 playerHand = [selected[0], selected[1]];
                 cpuHand = [selected[2], selected[3]];
                 sideCard = selected[4];
             }
-            
             difficulty = diff;
             document.getElementById('display-difficulty').innerText = diff;
             document.getElementById('start-modal').classList.add('hidden');
@@ -506,8 +548,8 @@
             board[4] = ["player-p", "player-p", "player-m", "player-p", "player-p"];
             windPos = { r: 2, c: 2 };
             currentPlayer = "player"; 
-            lastMove = null;
-            lastWindMove = null;
+            lastMove = null; lastWindMove = null;
+            isMovingWind = false; isAnimating = false;
         }
 
         function render() {
@@ -519,23 +561,15 @@
                     cell.className = 'cell';
                     if (r === 0 && c === 2) cell.classList.add('temple-red');
                     if (r === 4 && c === 2) cell.classList.add('temple-player');
-
                     if (lastMove && !isMovingWind) {
-                        if ((lastMove.from.r === r && lastMove.from.c === c) || (lastMove.to.r === r && lastMove.to.c === c)) {
-                            cell.classList.add(lastMove.player === 'player' ? 'last-move-player' : 'last-move-cpu');
-                        }
+                        if ((lastMove.from.r === r && lastMove.from.c === c) || (lastMove.to.r === r && lastMove.to.c === c)) cell.classList.add(lastMove.player === 'player' ? 'last-move-player' : 'last-move-cpu');
                     }
-
                     if (lastWindMove) {
-                        if ((lastWindMove.from.r === r && lastWindMove.from.c === c) || (lastWindMove.to.r === r && lastWindMove.to.c === c)) {
-                            cell.classList.add('last-move-wind');
-                        }
+                        if ((lastWindMove.from.r === r && lastWindMove.from.c === c) || (lastWindMove.to.r === r && lastWindMove.to.c === c)) cell.classList.add('last-move-wind');
                     }
-
                     if (windEnabled && r === windPos.r && c === windPos.c) {
                         const wind = document.createElement('div');
-                        wind.className = 'piece wind';
-                        wind.innerText = '🌀';
+                        wind.className = 'piece wind'; wind.innerText = '🌀';
                         if (isMovingWind) wind.classList.add('selected');
                         cell.appendChild(wind);
                     } else {
@@ -543,22 +577,17 @@
                         if (pieceData) {
                             const [color, type] = pieceData.split('-');
                             const piece = document.createElement('div');
-                            piece.className = `piece ${color} ${type === 'm' ? 'master' : ''}`;
+                            piece.className = `piece ${color === 'player' ? 'player' : 'red'} ${type === 'm' ? 'master' : ''}`;
                             piece.innerText = type === 'm' ? '⛩️' : '👤';
                             if (selectedPiece && selectedPiece.r === r && selectedPiece.c === c) piece.classList.add('selected');
                             cell.appendChild(piece);
                         }
                     }
-
                     if (currentPlayer === "player" && !isAnimating) {
                         if (isMovingWind) {
-                            if (getValidMoves(windPos.r, windPos.c, selectedCard, "player", true).some(m => m.r === r && m.c === c)) {
-                                cell.classList.add('valid-move');
-                            }
+                            if (getValidMoves(windPos.r, windPos.c, selectedCard, "player", true).some(m => m.r === r && m.c === c)) cell.classList.add('valid-move');
                         } else if (selectedPiece && selectedCard) {
-                            if (getValidMoves(selectedPiece.r, selectedPiece.c, selectedCard, "player", false).some(m => m.r === r && m.c === c)) {
-                                cell.classList.add('valid-move');
-                            }
+                            if (getValidMoves(selectedPiece.r, selectedPiece.c, selectedCard, "player", false).some(m => m.r === r && m.c === c)) cell.classList.add('valid-move');
                         }
                     }
                     cell.onclick = () => handleCellClick(r, c);
@@ -573,27 +602,22 @@
             const pArea = document.getElementById('player-cards');
             pArea.innerHTML = '';
             playerHand.forEach((card, i) => {
-                const cardUI = createCardUI(card, "player", i === selectedCard?.idx);
-                if (cardUI) {
-                    cardUI.id = `player-card-${i}`;
-                    pArea.appendChild(cardUI);
+                if(card) {
+                    const ui = createCardUI(card, "player", i === selectedCard?.idx);
+                    if(ui) { ui.id = `player-card-${i}`; pArea.appendChild(ui); }
                 }
             });
-
             const cArea = document.getElementById('cpu-cards');
             cArea.innerHTML = '';
             cpuHand.forEach((card, i) => {
-                const cardUI = createCardUI(card, "cpu", false);
-                if (cardUI) {
-                    cardUI.id = `cpu-card-${i}`;
-                    cArea.appendChild(cardUI);
+                if(card) {
+                    const ui = createCardUI(card, "cpu", false);
+                    if(ui) { ui.id = `cpu-card-${i}`; cArea.appendChild(ui); }
                 }
             });
-
             const lSlot = document.getElementById('left-slot');
             const rSlot = document.getElementById('right-slot');
             [...lSlot.children, ...rSlot.children].forEach(child => { if (!child.classList.contains('label-side')) child.remove(); });
-
             const sideUI = createCardUI(sideCard, "side", false);
             if (sideUI) {
                 sideUI.id = "side-card-ui";
@@ -604,36 +628,28 @@
 
         function createCardUI(card, type, isSelected) {
             if (!card) return null;
-            
             const el = document.createElement('div');
             el.className = `card ${isSelected ? 'selected' : ''} ${type === 'cpu' ? 'cpu-card' : ''} ${type === 'side' ? 'side-card' : ''}`;
-            
             const content = document.createElement('div');
             content.className = 'card-content';
-
             const header = document.createElement('div');
             header.className = 'card-header';
             const silhouette = document.createElement('span');
             silhouette.className = 'card-silhouette-small';
             silhouette.innerText = card.icon || "❓";
             const title = document.createElement('span');
-            title.className = 'text-[9px] font-bold uppercase truncate';
+            title.className = 'text-[9px] font-black uppercase truncate';
             title.innerText = card.name || "Sense Nom";
-            header.appendChild(silhouette);
-            header.appendChild(title);
+            header.appendChild(silhouette); header.appendChild(title);
             content.appendChild(header);
-
             content.appendChild(createMiniGrid(card.moves, type, false));
-
             if (card.set === 'wind') {
                 const divider = document.createElement('div');
                 divider.className = 'card-divider';
                 content.appendChild(divider);
                 content.appendChild(createMiniGrid(card.windMoves, type, true));
             }
-
             el.appendChild(content);
-
             if (type === "player" && currentPlayer === "player" && !isAnimating) {
                 el.onclick = (e) => {
                     e.stopPropagation();
@@ -650,12 +666,10 @@
             const grid = document.createElement('div');
             grid.className = `mini-grid ${isWindGrid ? 'mini-grid-wind' : ''}`;
             for (let i = 0; i < 25; i++) {
-                const r = Math.floor(i / 5);
-                const c = i % 5;
+                const r = Math.floor(i / 5); const c = i % 5;
                 const cell = document.createElement('div');
                 cell.className = 'mini-cell';
                 if (r === 2 && c === 2) cell.classList.add('center');
-                
                 if (moves) {
                     moves.forEach(m => {
                         const mr = type === 'cpu' ? 2 + m[1] : 2 - m[1];
@@ -671,40 +685,30 @@
         function updateUI() {
             const indicator = document.getElementById('turn-indicator');
             const windStatus = document.getElementById('wind-status');
-            
             if (isMovingWind) {
                 windStatus.classList.remove('hidden');
-                indicator.innerText = "Tria el destí de l'Esperit del Vent...";
-                indicator.className = "mb-2 text-sm text-cyan-600 font-bold";
+                indicator.innerText = "🌀 Mou l'Esperit del Vent...";
             } else {
                 windStatus.classList.add('hidden');
                 if (currentPlayer === "player") {
                     indicator.innerText = "És el teu torn";
-                    indicator.className = "mb-2 text-sm text-blue-600 font-bold animate-pulse";
+                    indicator.className = "mb-2 text-sm text-blue-900 font-black animate-pulse uppercase tracking-wider";
                 } else if (currentPlayer === "cpu") {
-                    indicator.innerText = "La CPU està pensant...";
-                    indicator.className = "mb-2 text-sm text-red-600 font-bold";
+                    indicator.innerText = "L'escola rival està meditant...";
+                    indicator.className = "mb-2 text-sm text-red-900 font-black uppercase tracking-wider";
                 }
             }
         }
 
         function handleCellClick(r, c) {
             if (currentPlayer !== "player" || isAnimating) return;
-
             if (isMovingWind) {
                 const moves = getValidMoves(windPos.r, windPos.c, selectedCard, "player", true);
-                const move = moves.find(m => m.r === r && m.c === c);
-                if (move) executeWindMove(move, "player");
+                if (moves.find(m => m.r === r && m.c === c)) executeWindMove({ r, c }, "player");
                 return;
             }
-
             const piece = board[r][c];
-            if (piece && piece.startsWith("player")) {
-                selectedPiece = { r, c };
-                render();
-                return;
-            }
-            
+            if (piece && piece.startsWith("player")) { selectedPiece = { r, c }; render(); return; }
             if (selectedPiece && selectedCard) {
                 const moves = getValidMoves(selectedPiece.r, selectedPiece.c, selectedCard, "player", false);
                 const move = moves.find(m => m.r === r && m.c === c);
@@ -717,20 +721,15 @@
             const moves = [];
             const patterns = forWind ? card.windMoves : card.moves;
             if (!patterns) return [];
-
             patterns.forEach(m => {
                 const dr = player === "player" ? -m[1] : m[1];
                 const dc = player === "player" ? m[0] : -m[0];
-                const nr = r + dr;
-                const nc = c + dc;
+                const nr = r + dr; const nc = c + dc;
                 if (nr >= 0 && nr < 5 && nc >= 0 && nc < 5) {
-                    if (forWind) {
-                        moves.push({ r: nr, c: nc });
-                    } else {
+                    if (forWind) moves.push({ r: nr, c: nc });
+                    else {
                         const target = board[nr][nc];
-                        if (!target || !target.startsWith(player === "player" ? "player" : "red")) {
-                            moves.push({ r: nr, c: nc });
-                        }
+                        if (!target || !target.startsWith(player === "player" ? "player" : "red")) moves.push({ r: nr, c: nc });
                     }
                 }
             });
@@ -739,31 +738,42 @@
 
         async function executeMove(player, from, to, cardIdx) {
             isAnimating = true;
+            
+            // FASE 1: MOURE CARTA A SLOT (I QUEDAR-S'HI)
+            const usedCardId = (player === "player") ? `player-card-${cardIdx}` : `cpu-card-${cardIdx}`;
+            const targetSlotId = (player === "player") ? "left-slot" : "right-slot";
+            const usedCardEl = document.getElementById(usedCardId);
+            const targetSlotEl = document.getElementById(targetSlotId);
+            
+            if (usedCardEl && targetSlotEl) {
+                await moveElement(usedCardEl, targetSlotEl);
+                // Si la CPU és qui mou, ja hem "mostrat" quina carta usa i està al lateral.
+                // No actualitzem les dades lògiques fins que el torn acaba del tot.
+            }
+
             const movingPiece = board[from.r][from.c];
             const targetPiece = board[to.r][to.c];
-            
             lastMove = { from: { ...from }, to: { ...to }, player };
 
             if (windEnabled && to.r === windPos.r && to.c === windPos.c) {
-                board[from.r][from.c] = null;
-                windPos = { ...from };
+                board[from.r][from.c] = null; windPos = { ...from };
                 board[to.r][to.c] = movingPiece;
                 lastWindMove = { from: { ...to }, to: { ...from } }; 
             } else {
-                board[to.r][to.c] = movingPiece;
-                board[from.r][from.c] = null;
+                board[to.r][to.c] = movingPiece; board[from.r][from.c] = null;
             }
 
             render();
             checkWin(movingPiece, targetPiece, to);
-            
             if (currentPlayer === "none") return;
 
-            if (selectedCard && selectedCard.set === 'wind') {
+            // FASE 2: VENT SI CAL
+            const currentCard = (player === "player") ? selectedCard : playerHand[cardIdx]; // La CPU ja ha "previsualitzat" el seu pla
+            if (currentCard && currentCard.set === 'wind') {
                 isMovingWind = true;
                 isAnimating = false;
                 render();
-                if (currentPlayer === "cpu") setTimeout(cpuMoveWind, 800);
+                if (player === "cpu") setTimeout(cpuMoveWind, 1000);
             } else {
                 finalizeTurn(player, cardIdx);
             }
@@ -773,43 +783,35 @@
             isAnimating = true;
             const targetPiece = board[to.r][to.c];
             lastWindMove = { from: { ...windPos }, to: { ...to } };
-
             if (targetPiece) {
-                const oldWind = { ...windPos };
-                windPos = { ...to };
-                board[oldWind.r][oldWind.c] = targetPiece;
-                board[to.r][to.c] = null;
-            } else {
-                windPos = { ...to };
-            }
-
+                const oldWind = { ...windPos }; windPos = { ...to };
+                board[oldWind.r][oldWind.c] = targetPiece; board[to.r][to.c] = null;
+            } else { windPos = { ...to }; }
             isMovingWind = false;
-            finalizeTurn(actor, selectedCard.idx);
+            // El cardIdx s'obté de l'estat si som el jugador o ja està guardat
+            finalizeTurn(actor, (actor === "player") ? selectedCard.idx : gameSettings.lastCpuIdx);
         }
 
         async function finalizeTurn(player, cardIdx) {
-            await animateCardSwap(player, cardIdx);
-            selectedPiece = null;
-            selectedCard = null;
+            // FASE 3: AGAFAR CARTA DE "SEGUENT" (SIDE CARD)
+            const sideCardEl = document.getElementById("side-card-ui");
+            const usedPlaceholder = document.getElementById((player === "player") ? `player-card-${cardIdx}` : `cpu-card-${cardIdx}`);
+            
+            if (sideCardEl && usedPlaceholder) {
+                await moveElement(sideCardEl, usedPlaceholder.parentElement);
+            }
+            
+            // FASE 4: ACTUALITZACIÓ LOGICA FINAL
+            const hand = (player === "player") ? playerHand : cpuHand;
+            const usedData = hand[cardIdx];
+            hand[cardIdx] = sideCard;
+            sideCard = usedData;
+
+            selectedPiece = null; selectedCard = null;
             currentPlayer = (player === "player") ? "cpu" : "player";
             isAnimating = false;
             render();
-            if (currentPlayer === "cpu") setTimeout(makeCPUMove, 800);
-        }
-
-        async function animateCardSwap(player, cardIdx) {
-            const usedCardId = player === "player" ? `player-card-${cardIdx}` : `cpu-card-${cardIdx}`;
-            const targetSlotId = player === "player" ? "left-slot" : "right-slot"; 
-            const usedCardEl = document.getElementById(usedCardId);
-            const sideCardEl = document.getElementById("side-card-ui");
-            const targetSlotEl = document.getElementById(targetSlotId);
-            if (!usedCardEl || !sideCardEl || !targetSlotEl) return;
-            await moveElement(usedCardEl, targetSlotEl);
-            const hand = player === "player" ? playerHand : cpuHand;
-            const usedCardData = hand[cardIdx];
-            await moveElement(sideCardEl, usedCardEl.parentElement);
-            hand[cardIdx] = sideCard;
-            sideCard = usedCardData;
+            if (currentPlayer === "cpu") setTimeout(makeCPUMove, 1000);
         }
 
         function moveElement(el, targetParent) {
@@ -818,71 +820,61 @@
                 const targetRect = targetParent.getBoundingClientRect();
                 const deltaX = (targetRect.left + targetRect.width/2) - (startRect.left + startRect.width/2);
                 const deltaY = (targetRect.top + targetRect.height/2) - (startRect.top + startRect.height/2);
-                el.style.transition = "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s";
+                el.style.transition = "transform 0.85s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s";
                 el.style.transform = `translate(${deltaX}px, ${deltaY}px) ${el.classList.contains('cpu-card') ? 'rotate(180deg)' : ''}`;
-                el.style.opacity = "0.7";
-                setTimeout(() => resolve(), 650);
+                el.style.opacity = "0.8";
+                setTimeout(() => resolve(), 900);
             });
         }
 
         function checkWin(movingPiece, capturedPiece, pos) {
             if (capturedPiece && capturedPiece.endsWith("-m")) endGame(movingPiece.startsWith("player") ? "player" : "cpu", "S'ha capturat el líder de l'escola rival.");
             if (movingPiece === "player-m" && pos.r === 0 && pos.c === 2) endGame("player", "Has arribat al temple rival.");
-            if (movingPiece === "red-m" && pos.r === 4 && pos.c === 2) endGame("cpu", "La CPU ha arribat al teu temple.");
+            if (movingPiece === "red-m" && pos.r === 4 && pos.c === 2) endGame("cpu", "L'escola rival ha capturat el teu temple.");
         }
 
         function endGame(winner, reason) {
             const modal = document.getElementById('game-over-modal');
             const border = document.getElementById('modal-border');
-            const text = document.getElementById('winner-text');
-            const reasonEl = document.getElementById('winner-reason');
-            text.innerText = winner === "player" ? "VICTÒRIA!" : "DERROTA...";
+            document.getElementById('winner-text').innerText = winner === "player" ? "VICTÒRIA!" : "DERROTA...";
             border.style.borderColor = winner === "player" ? "var(--player-theme)" : "var(--cpu-red)";
-            text.className = winner === "player" ? "text-3xl font-bold mb-2 text-blue-600" : "text-3xl font-bold mb-2 text-red-600";
-            reasonEl.innerText = reason;
+            document.getElementById('winner-text').className = winner === "player" ? "text-5xl font-black mb-6 text-blue-900" : "text-5xl font-black mb-6 text-red-900";
+            document.getElementById('winner-reason').innerText = reason;
             modal.classList.remove('hidden');
-            currentPlayer = "none";
-            isAnimating = false;
+            currentPlayer = "none"; isAnimating = false;
         }
 
         function makeCPUMove() {
             if (currentPlayer !== "cpu" || isAnimating) return;
             let moves = getAllPossibleMoves("cpu");
-            if (moves.length === 0) {
-                animateCardSwap("cpu", 0).then(() => { currentPlayer = "player"; render(); });
-                return;
-            }
-            let bestMove;
-            if (difficulty === 1) bestMove = moves[Math.floor(Math.random() * moves.length)];
-            else if (difficulty === 2) bestMove = getBestDefensiveMove(moves);
-            else bestMove = getMinimaxMove(moves);
+            if (moves.length === 0) { finalizeTurn("cpu", 0); return; }
+            let bestMove = (difficulty === 1) ? moves[Math.floor(Math.random() * moves.length)] : 
+                           (difficulty === 2) ? getBestDefensiveMove(moves) : getMinimaxMove(moves);
             
-            selectedCard = bestMove.card; 
+            gameSettings.lastCpuIdx = bestMove.cardIdx;
             executeMove("cpu", bestMove.from, bestMove.to, bestMove.cardIdx);
         }
 
         function cpuMoveWind() {
-            const moves = getValidMoves(windPos.r, windPos.c, selectedCard, "cpu", true);
-            if (moves.length === 0) { finalizeTurn("cpu", selectedCard.idx); return; }
-            const move = moves[Math.floor(Math.random() * moves.length)];
-            executeWindMove(move, "cpu");
+            // El vent ha de moure basant-se en la carta que ACABA de ser posada al lateral (sideCard actualment)
+            const moves = getValidMoves(windPos.r, windPos.c, sideCard, "cpu", true);
+            if (moves.length === 0) { finalizeTurn("cpu", gameSettings.lastCpuIdx); return; }
+            executeWindMove(moves[Math.floor(Math.random() * moves.length)], "cpu");
         }
 
         function getAllPossibleMoves(player) {
-            const moves = [];
-            const hand = player === "player" ? playerHand : cpuHand;
-            for (let r = 0; r < 5; r++) {
-                for (let c = 0; c < 5; c++) {
-                    const piece = board[r][c];
-                    if (piece && piece.startsWith(player === "player" ? "player" : "red")) {
-                        hand.forEach((card, cardIdx) => {
-                            if (card) {
-                                getValidMoves(r, c, card, player, false).forEach(v => moves.push({ from: { r, c }, to: v, cardIdx, card }));
-                            }
-                        });
+            const moves = []; const hand = (player === "player") ? playerHand : cpuHand;
+            hand.forEach((card, cardIdx) => {
+                if (!card) return;
+                for (let r = 0; r < 5; r++) {
+                    for (let c = 0; c < 5; c++) {
+                        const piece = board[r][c];
+                        if (piece && piece.startsWith(player === "player" ? "player" : "red")) {
+                            getValidMoves(r, c, card, player, false).forEach(v => moves.push({ from: { r, c }, to: v, cardIdx, card }));
+                        }
                     }
                 }
-            }
+            });
             return moves;
         }
 
@@ -893,44 +885,34 @@
         }
 
         function evaluatePosition(move, checkSafety = false) {
-            let score = Math.random() * 5; 
-            const target = board[move.to.r][move.to.c];
-            const isMaster = board[move.from.r][move.from.c] === "red-m";
+            let score = Math.random() * 5; const target = board[move.to.r][move.to.c];
             if (target === "player-m") score += 5000;
-            if (target === "player-p") score += 30;
-            if (isMaster) {
+            if (target === "player-p") score += 40;
+            if (board[move.from.r][move.from.c] === "red-m") {
                 const distNew = Math.abs(move.to.r - 4) + Math.abs(move.to.c - 2);
                 const distOld = Math.abs(move.from.r - 4) + Math.abs(move.from.c - 2);
-                if (distNew < distOld) score += 15;
-                if (move.to.r === 4 && move.to.c === 2) score += 4000;
+                if (distNew < distOld) score += 20;
+                if (move.to.r === 4 && move.to.c === 2) score += 4500;
             }
             if (checkSafety) {
-                const oldTo = board[move.to.r][move.to.c];
-                const oldFrom = board[move.from.r][move.from.c];
-                board[move.to.r][move.to.c] = oldFrom;
-                board[move.from.r][move.from.c] = null;
+                const oldTo = board[move.to.r][move.to.c]; const oldFrom = board[move.from.r][move.from.c];
+                board[move.to.r][move.to.c] = oldFrom; board[move.from.r][move.from.c] = null;
                 const masterPos = findPiece("red-m");
-                if (masterPos && isSquareAttacked(masterPos.r, masterPos.c, "player")) score -= 1500;
-                board[move.from.r][move.from.c] = oldFrom;
-                board[move.to.r][move.to.c] = oldTo;
+                if (masterPos && isSquareAttacked(masterPos.r, masterPos.c, "player")) score -= 2000;
+                board[move.from.r][move.from.c] = oldFrom; board[move.to.r][move.to.c] = oldTo;
             }
             return score;
         }
 
-        function findPiece(pieceId) {
-            for(let r=0; r<5; r++) for(let c=0; c<5; c++) if (board[r][c] === pieceId) return {r, c};
-            return null;
-        }
+        function findPiece(id) { for(let r=0; r<5; r++) for(let c=0; c<5; c++) if (board[r][c] === id) return {r, c}; return null; }
 
         function isSquareAttacked(r, c, attacker) {
-            const hand = attacker === "player" ? playerHand : cpuHand;
+            const hand = (attacker === "player") ? playerHand : cpuHand;
             for (let i = 0; i < 5; i++) {
                 for (let j = 0; j < 5; j++) {
                     const piece = board[i][j];
                     if (piece && piece.startsWith(attacker === "player" ? "player" : "red")) {
-                        for (const card of hand) {
-                            if (card && getValidMoves(i, j, card, attacker, false).some(m => m.r === r && m.c === c)) return true;
-                        }
+                        for (const card of hand) if (card && getValidMoves(i, j, card, attacker, false).some(m => m.r === r && m.c === c)) return true;
                     }
                 }
             }
@@ -938,28 +920,21 @@
         }
 
         function getMinimaxMove(moves) {
-            let best = -Infinity;
-            let choice = moves[0];
+            let best = -Infinity; let choice = moves[0];
             moves.forEach(m => {
-                const oldTo = board[m.to.r][m.to.c];
-                const oldFrom = board[m.from.r][m.from.c];
-                board[m.to.r][m.to.c] = oldFrom;
-                board[m.from.r][m.from.c] = null;
+                const oldTo = board[m.to.r][m.to.c]; const oldFrom = board[m.from.r][m.from.c];
+                board[m.to.r][m.to.c] = oldFrom; board[m.from.r][m.from.c] = null;
                 const playerMoves = getAllPossibleMoves("player");
                 let maxPlayerScore = playerMoves.length > 0 ? -Infinity : 0;
-                playerMoves.forEach(pm => {
-                    const s = evaluatePosition(pm, false);
-                    if (s > maxPlayerScore) maxPlayerScore = s;
-                });
-                const currentScore = evaluatePosition(m, true) - (maxPlayerScore * 0.6);
+                playerMoves.forEach(pm => { const s = evaluatePosition(pm, false); if (s > maxPlayerScore) maxPlayerScore = s; });
+                const currentScore = evaluatePosition(m, true) - (maxPlayerScore * 0.7);
                 if (currentScore > best) { best = currentScore; choice = m; }
-                board[m.from.r][m.from.c] = oldFrom;
-                board[m.to.r][m.to.c] = oldTo;
+                board[m.from.r][m.from.c] = oldFrom; board[m.to.r][m.to.c] = oldTo;
             });
             return choice;
         }
 
-        window.onload = validateStart;
+        window.onload = showStartModal;
         function showRules() { document.getElementById('rules-modal').classList.remove('hidden'); }
         function closeRules() { document.getElementById('rules-modal').classList.add('hidden'); }
     </script>
