@@ -243,7 +243,11 @@
             z-index: 100;
         }
 
-        .modal-top { align-items: flex-start; padding-top: 7vh; }
+        .modal-top { 
+            align-items: flex-start; 
+            padding-top: 2vh; 
+            background-color: rgba(0,0,0,0.35);
+        }
         .cpu-card { transform: rotate(180deg); }
         .inverted { transform: rotate(180deg); }
 
@@ -425,7 +429,7 @@
     </div>
 
     <script>
-        // --- BASE DE DADES DE CARTES ---
+        // --- BASE DE DADES DE CARTES (REVISADES I DEFINITIVES) ---
         const DECK_BASE = [
             { name: "Tigre", icon: "🐅", moves: [[0, 2], [0, -1]], set: "base" },
             { name: "Drac", icon: "🐉", moves: [[-2, 1], [2, 1], [-1, -1], [1, -1]], set: "base" },
@@ -467,13 +471,13 @@
         ];
 
         const DECK_WIND = [
-            { name: "Escorpí", icon: "🦂", moves: [[-2, 1], [2, 1]], windMoves: [[-1, -1], [0, 1], [1, -1]], set: "wind" },
-            { name: "Pop", icon: "🐙", moves: [[-1, 2], [1, 2]], windMoves: [[-1, 0], [0, -1], [1, 0]], set: "wind" },
-            { name: "Rinoceront", icon: "🦏", moves: [[0, 2]], windMoves: [[-1, 1], [1, 1], [-1, 0], [1, 0], [0, -1]], set: "wind" },
+            { name: "Escorpí", icon: "🦂", moves: [[-2, 1], [2, 1]], windMoves: [[-1, 1], [1, 1], [0, -1]], set: "wind" },
+            { name: "Pop", icon: "🐙", moves: [[-1, 2], [1, 2]], windMoves: [[-1, 0], [1, 0], [0, -1]], set: "wind" },
+            { name: "Rinoceront", icon: "🦏", moves: [[0, 2]], windMoves: [[-1, 1], [1, 1], [-1, -1], [0, -1], [1, -1]], set: "wind" },
             { name: "Ratpenat", icon: "🦇", moves: [[-1, 2], [1, 2], [0, -1]], windMoves: [[-1, 0], [1, 0]], set: "wind" },
             { name: "Aranya", icon: "🕷️", moves: [[-1, 2], [0, 1], [1, 2]], windMoves: [[0, -1]], set: "wind" },
             { name: "Lleó", icon: "🦁", moves: [[-1, 2], [1, 2]], windMoves: [[0, 1], [0, -1]], set: "wind" },
-            { name: "Falcó", icon: "🦅", moves: [[-1, 2], [1, 2]], windMoves: [[-1, 1], [0, -1], [1, 1]], set: "wind" },
+            { name: "Falcó", icon: "🦅", moves: [[-1, 2], [1, 2]], windMoves: [[-1, 1], [1, 1], [0, -1]], set: "wind" },
             { name: "Àliga", icon: "🦅", moves: [[-1, 2], [1, 2], [0, 1]], windMoves: [[-2, 0], [2, 0]], set: "wind" }
         ];
 
@@ -498,7 +502,7 @@
         // Persistència en memòria
         let gameSettings = { base: true, sensei: false, wind: false };
 
-        // --- FUNCIONS UI ---
+        // --- FUNCIONS UI I CONFIGURACIÓ ---
         function showStartModal() {
             document.getElementById('game-over-modal').classList.add('hidden');
             document.getElementById('game-container').classList.add('hidden');
@@ -575,17 +579,17 @@
             board[4] = ["player-p", "player-p", "player-m", "player-p", "player-p"];
             windPos = { r: 2, c: 2 };
             
-            // Torn inicial aleatori 50/50
+            // Torn inicial completament aleatori (50/50)
             currentPlayer = Math.random() < 0.5 ? "player" : "cpu"; 
             lastMove = null; lastWindMove = null;
             isMovingWind = false; isAnimating = false; isAnimatingCards = false;
             
             if(currentPlayer === "cpu") {
-                setTimeout(makeCPUMove, 1200);
+                setTimeout(makeCPUMove, 1000);
             }
         }
 
-        // --- RENDERITZAT ---
+        // --- RENDERITZAT SEPARAT ---
 
         function renderAll() {
             renderBoard();
@@ -627,6 +631,7 @@
                         }
                     }
                     
+                    // Si l'animació de cartes o bloqueig estan actius, s'oculten els punts i no es fa res al clic
                     if (currentPlayer === "player" && !isAnimating && !isAnimatingCards) {
                         if (isMovingWind) {
                             if (getValidMoves(windPos.r, windPos.c, selectedCard, "player", true).some(m => m.r === r && m.c === c)) cell.classList.add('valid-move');
@@ -658,9 +663,9 @@
                 }
             });
 
-            // L'escola rival (CPU) situa les cartes al Següent Tu (dreta). Tu les situes al Següent Rival (esquerra).
-            // Següent Rival = Esquerra (Mai s'inverteix visualment, es queda de peu)
-            // Següent Tu = Dreta (Sempre invertida per estar a punt per agafar-la la persona que juga)
+            // Ubicació visual correcta del lateral:
+            // Següent Rival (Esquerra) = SEMPRE de peu (0deg). 
+            // Següent Tu (Dreta) = SEMPRE al revés (180deg).
             const lSlot = document.getElementById('left-slot');
             const rSlot = document.getElementById('right-slot');
             [...lSlot.children, ...rSlot.children].forEach(child => { if (!child.classList.contains('label-side')) child.remove(); });
@@ -669,12 +674,10 @@
             if (sideUI) {
                 sideUI.id = "side-card-ui";
                 if (currentPlayer === "player") {
-                    // Esperant al costat dret (Següent Tu), per recollir. SEMPRE INVERTIDA.
-                    sideUI.classList.add('inverted');
+                    sideUI.classList.add('inverted'); // Esperant al costat dret al revés per tu
                     rSlot.appendChild(sideUI);
                 } else {
-                    // Esperant al costat esquerre (Següent Rival). SEMPRE DE PEU.
-                    sideUI.classList.remove('inverted');
+                    sideUI.classList.remove('inverted'); // Esperant a l'esquerra de peu per la CPU
                     lSlot.appendChild(sideUI);
                 }
             }
@@ -696,20 +699,20 @@
             title.innerText = card.name || "Misteri";
             header.appendChild(silhouette); header.appendChild(title);
             content.appendChild(header);
-            content.appendChild(createMiniGrid(card.moves, type, false));
+            content.appendChild(createMiniGrid(card.moves, false));
             
             if (card.set === 'wind') {
                 const divider = document.createElement('div');
                 divider.className = 'card-divider';
                 content.appendChild(divider);
-                content.appendChild(createMiniGrid(card.windMoves, type, true));
+                content.appendChild(createMiniGrid(card.windMoves, true));
             }
             el.appendChild(content);
             
             if (type === "player" && currentPlayer === "player" && !isAnimating && !isAnimatingCards) {
                 el.onclick = (e) => {
                     e.stopPropagation();
-                    if (isMovingWind) return; // No pots canviar de carta un cop has escollit moure el vent
+                    if (isMovingWind) return; 
                     if (selectedCard?.idx === playerHand.indexOf(card)) selectedCard = null;
                     else selectedCard = { ...card, idx: playerHand.indexOf(card) };
                     renderAll();
@@ -718,7 +721,7 @@
             return el;
         }
 
-        function createMiniGrid(moves, type, isWindGrid) {
+        function createMiniGrid(moves, isWindGrid) {
             const grid = document.createElement('div');
             grid.className = `mini-grid ${isWindGrid ? 'mini-grid-wind' : ''}`;
             for (let i = 0; i < 25; i++) {
@@ -728,8 +731,8 @@
                 if (r === 2 && c === 2) cell.classList.add('center');
                 if (moves) {
                     moves.forEach(m => {
-                        const mr = type === 'cpu' ? 2 + m[1] : 2 - m[1];
-                        const mc = type === 'cpu' ? -m[0] + 2 : m[0] + 2;
+                        const mr = 2 - m[1];
+                        const mc = m[0] + 2;
                         if (mr === r && mc === c) cell.classList.add(isWindGrid ? 'move-wind' : 'move');
                     });
                 }
@@ -759,7 +762,6 @@
         // --- LÒGICA DE JOC I ANIMACIONS ---
 
         function handleCellClick(r, c) {
-            // El bloqueig per animació impedeix clicar prematurament.
             if (currentPlayer !== "player" || isAnimating || isAnimatingCards) return;
             
             if (isMovingWind) {
@@ -809,7 +811,7 @@
             isAnimatingCards = true;
             const currentCard = selectedCard; 
 
-            // FASE 1: LA CPU MOU LA SEVA CARTA (SENSE GIRAR VISUALMENT)
+            // FASE 1: LA CPU MOU LA SEVA CARTA (SENSE GIRAR VISUALMENT: va al Següent Tu)
             if (player === "cpu") {
                 const usedCardId = `cpu-card-${cardIdx}`;
                 const targetSlotId = "right-slot";
@@ -842,20 +844,22 @@
                 
                 if (availableWindMoves.length > 0) {
                     isMovingWind = true;
-                    // Desbloquegem l'animació just ara perquè el jugador pugui fer clic al vent
-                    isAnimating = false;
+                    isAnimating = false; // Allibera l'UI pel jugador
                     isAnimatingCards = false;
                     updateUI();
-                    renderBoard();
+                    renderBoard(); 
                     
-                    await new Promise(resolve => { 
-                        windMoveResolver = resolve; 
-                        if (player === "cpu") {
-                            setTimeout(cpuMoveWind, 1000);
-                        }
-                    });
+                    if (player === "player") {
+                        // Creem la promesa per esperar la decisió
+                        await new Promise(resolve => { windMoveResolver = resolve; });
+                    } else {
+                        await new Promise(resolve => setTimeout(resolve, 800));
+                        // La CPU està obligada a complir el bloqueig abans de disparar processWindMove
+                        const cpuPromise = new Promise(resolve => { windMoveResolver = resolve; });
+                        cpuMoveWind();
+                        await cpuPromise;
+                    }
                     
-                    // Bloquegem de nou per continuar la seqüència visual
                     isAnimating = true;
                     isAnimatingCards = true;
                 }
@@ -878,7 +882,7 @@
             renderBoard();
             
             if (windMoveResolver) {
-                windMoveResolver(); // Permet a l'executeTurn continuar
+                windMoveResolver(); 
                 windMoveResolver = null;
             }
         }
@@ -889,13 +893,12 @@
                 const move = moves[Math.floor(Math.random() * moves.length)];
                 processWindMove(move, "cpu");
             } else {
-                // Paracaigudes: Si estranyament no tingués moviments, allibera la promesa.
-                processWindMove(windPos, "cpu");
+                processWindMove(windPos, "cpu"); 
             }
         }
 
         async function finalizeTurn(player, cardIdx, currentCard) {
-            // FASE 4a: EL JUGADOR MOU LA SEVA CARTA AL LATERAL RIVAL NOMÉS QUAN ACABA ELS SEUS MOVIMENTS (De peu, rotate:0)
+            // FASE 4a: EL JUGADOR MOU LA SEVA CARTA AL LATERAL (Següent Rival) - DE PEU (0deg)
             if (player === "player") {
                 const usedCardId = `player-card-${cardIdx}`;
                 const targetSlotId = "left-slot"; 
@@ -906,7 +909,7 @@
                 }
             }
 
-            // FASE 5: LA CARTA LATERAL CORRESPONENT VOLA A LA MÀ BUIDA FENT UN GIR A L'AIRE
+            // FASE 5: LA CARTA LATERAL VOLA A LA MÀ BUIDA FENT UN GIR A L'AIRE
             const incomingSlotId = (player === "player") ? "right-slot" : "left-slot";
             const sideCardEl = document.querySelector(`#${incomingSlotId} .card`);
             const placeholderEl = document.getElementById((player === "player") ? `placeholder-player-card-${cardIdx}` : `placeholder-cpu-card-${cardIdx}`);
@@ -916,7 +919,7 @@
                 await animateCardToHand(sideCardEl, placeholderEl, isForPlayer);
             }
 
-            // FASE 6: ACTUALITZACIÓ LÒGICA DEFINITIVA I CANVI DE TORN
+            // FASE 6: ACTUALITZACIÓ LÒGICA (S'executa quan l'animació ja és al lloc)
             const hand = (player === "player") ? playerHand : cpuHand;
             const usedData = hand[cardIdx];
             hand[cardIdx] = sideCard;
@@ -960,9 +963,9 @@
                 const dx = target.left + target.width/2 - (start.left + start.width/2);
                 const dy = target.top + target.height/2 - (start.top + start.height/2);
 
-                clone.getBoundingClientRect();
+                clone.getBoundingClientRect(); 
 
-                // La CPU envia a "Següent Tu" (invertida: 180deg). Player envia a "Següent Rival" (de peu: 0deg).
+                // La CPU va a "Següent Tu" invertida. Player a "Següent Rival" de peu.
                 const finalRotation = isCpu ? 'rotate(180deg)' : 'rotate(0deg)';
                 clone.style.transform = `translate(${dx}px, ${dy}px) ${finalRotation}`;
 
@@ -992,10 +995,10 @@
                 clone.style.margin = '0';
                 clone.style.zIndex = '1000';
                 
-                // Per a mi (player) la carta està al revés (180deg). Per a la CPU (al Següent Rival) està de peu (0deg).
+                // El jugador agafa de "Següent Tu" (180deg). La CPU agafa de "Següent Rival" (0deg).
                 const initialRotation = isForPlayer ? 'rotate(180deg)' : 'rotate(0deg)';
                 clone.style.transform = initialRotation;
-                clone.style.transition = 'transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                clone.style.transition = 'transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1)';
                 
                 document.body.appendChild(clone);
                 cardEl.style.opacity = '0';
@@ -1005,7 +1008,7 @@
 
                 clone.getBoundingClientRect();
 
-                // L'efecte de donar la volta: de 180 a 0 (Player) i de 0 a 180 (CPU).
+                // L'efecte de donar la volta en vol.
                 const finalRotation = isForPlayer ? 'rotate(0deg)' : 'rotate(180deg)';
                 clone.style.transform = `translate(${dx}px, ${dy}px) ${finalRotation} scale(1.05)`;
 
