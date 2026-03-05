@@ -243,11 +243,7 @@
             z-index: 100;
         }
 
-        .modal-top { 
-            align-items: flex-start; 
-            padding-top: 2vh; 
-            background-color: rgba(0,0,0,0.35);
-        }
+        .modal-top { align-items: flex-start; padding-top: 7vh; }
         .cpu-card { transform: rotate(180deg); }
         .inverted { transform: rotate(180deg); }
 
@@ -310,6 +306,15 @@
             50% { opacity: 0.8; transform: scale(1.02); }
             100% { opacity: 1; transform: scale(1); }
         }
+        
+        /* Toggle Switch CSS */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #1e40af;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #1e40af;
+        }
     </style>
 </head>
 <body class="p-4 flex flex-col items-center min-h-screen">
@@ -322,7 +327,7 @@
         
         <!-- Àrea CPU -->
         <div class="flex flex-col items-center gap-3">
-            <h2 class="text-red-900 font-black uppercase tracking-[0.3em] text-sm bg-white/50 px-4 py-1 rounded">Escola Rival (Nivell <span id="display-difficulty">1</span>)</h2>
+            <h2 class="text-red-900 font-black uppercase tracking-[0.3em] text-sm bg-white/50 px-4 py-1 rounded shadow-sm">Escola Rival (Nivell <span id="display-difficulty">1</span>)</h2>
             <div id="cpu-cards" class="flex gap-4"></div>
         </div>
 
@@ -338,9 +343,25 @@
 
         <!-- Àrea Persona que Juga -->
         <div class="flex flex-col items-center gap-3">
-            <div class="mb-2 text-md text-stone-800 font-bold tracking-widest bg-white/50 px-4 py-1 rounded" id="turn-indicator">Carregant forces...</div>
+            <div class="mb-1 text-md text-stone-800 font-bold tracking-widest bg-white/50 px-4 py-1 rounded shadow-sm" id="turn-indicator">Carregant forces...</div>
             <div id="player-cards" class="flex gap-4"></div>
-            <h2 class="text-blue-900 font-black uppercase tracking-[0.3em] text-sm mt-2 bg-white/50 px-4 py-1 rounded">La Teva Escola</h2>
+            
+            <!-- Controls (Desfer + Ajuda visual) -->
+            <div class="flex justify-center items-center gap-6 mt-2 w-full max-w-md">
+                <button onclick="undoMove()" id="undo-btn" class="text-[11px] font-black text-stone-600 uppercase bg-white/70 px-5 py-2.5 rounded-full hover:bg-white transition shadow-md border-2 border-stone-300 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2" disabled>
+                    <span class="text-sm">⏪</span> Desfer Moviment
+                </button>
+
+                <div class="flex items-center gap-3 bg-white/70 px-4 py-2 rounded-full shadow-md border-2 border-stone-300">
+                    <span class="text-[11px] font-black text-stone-600 uppercase">Ajuda Visual</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="help-toggle" class="sr-only peer" checked onchange="toggleHelp()">
+                        <div class="w-9 h-5 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-800"></div>
+                    </label>
+                </div>
+            </div>
+
+            <h2 class="text-blue-900 font-black uppercase tracking-[0.3em] text-sm mt-1 bg-white/50 px-4 py-1 rounded shadow-sm">La Teva Escola</h2>
         </div>
     </div>
 
@@ -419,17 +440,17 @@
         </div>
     </div>
 
-    <!-- Modal Fi de Joc (Apareix a la part superior per no tapar el taulell) -->
+    <!-- Modal Fi de Joc -->
     <div id="game-over-modal" class="modal modal-top hidden">
         <div class="jp-modal-content p-14 rounded-2xl shadow-2xl max-w-sm w-full text-center border-t-[12px]" id="modal-border">
             <h2 id="winner-text" class="text-5xl font-black mb-6 tracking-tighter"></h2>
             <p id="winner-reason" class="text-stone-800 mb-12 italic text-xl font-bold"></p>
-            <button onclick="showStartModal()" class="bg-red-800 hover:bg-red-950 text-white px-14 py-6 rounded-2xl font-black w-full transition shadow-2xl uppercase tracking-widest text-sm border-2 border-red-500">Nova Partida</button>
+            <button onclick="showStartModal()" class="bg-red-800 hover:bg-red-950 text-white px-14 py-6 rounded-2xl font-black w-full transition shadow-2xl uppercase tracking-widest text-sm border-2 border-red-500">Nou Combat</button>
         </div>
     </div>
 
     <script>
-        // --- BASE DE DADES DE CARTES (REVISADES I DEFINITIVES) ---
+        // --- BASE DE DADES DE CARTES ---
         const DECK_BASE = [
             { name: "Tigre", icon: "🐅", moves: [[0, 2], [0, -1]], set: "base" },
             { name: "Drac", icon: "🐉", moves: [[-2, 1], [2, 1], [-1, -1], [1, -1]], set: "base" },
@@ -498,8 +519,10 @@
         let windPos = { r: 2, c: 2 };
         let windEnabled = false;
         let windMoveResolver = null; 
+        let showMoveHelp = true;
+        let moveHistory = []; // Control del botó de "Desfer"
 
-        // Persistència en memòria
+        // Persistència de la sessió
         let gameSettings = { base: true, sensei: false, wind: false };
 
         // --- FUNCIONS UI I CONFIGURACIÓ ---
@@ -527,6 +550,11 @@
             btns.forEach(b => b.disabled = !isValid);
             if (!isValid) validationMsg.classList.remove('hidden');
             else validationMsg.classList.add('hidden');
+        }
+
+        function toggleHelp() {
+            showMoveHelp = document.getElementById('help-toggle').checked;
+            renderBoard();
         }
 
         function openPreview(deckKey) {
@@ -578,8 +606,8 @@
             board[0] = ["red-p", "red-p", "red-m", "red-p", "red-p"];
             board[4] = ["player-p", "player-p", "player-m", "player-p", "player-p"];
             windPos = { r: 2, c: 2 };
+            moveHistory = [];
             
-            // Torn inicial completament aleatori
             currentPlayer = Math.random() < 0.5 ? "player" : "cpu"; 
             lastMove = null; lastWindMove = null;
             isMovingWind = false; isAnimating = false; isAnimatingCards = false;
@@ -589,8 +617,63 @@
             }
         }
 
-        // --- RENDERITZAT SEPARAT I CONTROL DOM ---
+        // --- SISTEMA DESFER ---
+        function saveState() {
+            moveHistory.push({
+                board: board.map(r => [...r]),
+                playerHand: [...playerHand],
+                cpuHand: [...cpuHand],
+                sideCard: sideCard,
+                windPos: { ...windPos },
+                lastMove: lastMove ? { from: {...lastMove.from}, to: {...lastMove.to}, player: lastMove.player } : null,
+                lastWindMove: lastWindMove ? { from: {...lastWindMove.from}, to: {...lastWindMove.to} } : null,
+                currentPlayer: currentPlayer
+            });
+            updateUndoButton();
+        }
 
+        function undoMove() {
+            if (moveHistory.length === 0 || currentPlayer !== "player" || isAnimatingCards) return;
+            // Prevent undoing if currently animating board pieces, unless we are freely picking Wind
+            if (isAnimating && !isMovingWind) return;
+
+            const state = moveHistory.pop();
+            board = state.board.map(r => [...r]);
+            playerHand = [...state.playerHand];
+            cpuHand = [...state.cpuHand];
+            sideCard = state.sideCard;
+            windPos = { ...state.windPos };
+            lastMove = state.lastMove ? { from: {...state.lastMove.from}, to: {...state.lastMove.to}, player: state.lastMove.player } : null;
+            lastWindMove = state.lastWindMove ? { from: {...state.lastWindMove.from}, to: {...state.lastWindMove.to} } : null;
+            currentPlayer = state.currentPlayer;
+            
+            selectedPiece = null;
+            selectedCard = null;
+            isMovingWind = false;
+            isAnimating = false;
+            isAnimatingCards = false;
+
+            if (windMoveResolver) {
+                windMoveResolver({ abort: true });
+                windMoveResolver = null;
+            }
+
+            renderAll();
+            updateUndoButton();
+        }
+
+        function updateUndoButton() {
+            const btn = document.getElementById('undo-btn');
+            if (btn) {
+                const canUndo = moveHistory.length > 0 && 
+                                currentPlayer === "player" && 
+                                (!isAnimating || isMovingWind) && 
+                                !isAnimatingCards;
+                btn.disabled = !canUndo;
+            }
+        }
+
+        // --- RENDERITZAT SEPARAT ---
         function renderAll() {
             renderBoard();
             renderCards();
@@ -603,7 +686,7 @@
             for (let r = 0; r < 5; r++) {
                 for (let c = 0; c < 5; c++) {
                     const cell = document.createElement('div');
-                    cell.id = `cell-${r}-${c}`; // Important per les animacions de moviment
+                    cell.id = `cell-${r}-${c}`; 
                     cell.className = 'cell';
                     if (r === 0 && c === 2) cell.classList.add('temple-red');
                     if (r === 4 && c === 2) cell.classList.add('temple-player');
@@ -632,8 +715,7 @@
                         }
                     }
                     
-                    // Si l'animació de cartes o bloqueig estan actius, s'oculten els punts i no es fa res al clic
-                    if (currentPlayer === "player" && !isAnimating && !isAnimatingCards) {
+                    if (showMoveHelp && currentPlayer === "player" && !isAnimating && !isAnimatingCards) {
                         if (isMovingWind) {
                             if (getValidMoves(windPos.r, windPos.c, selectedCard, "player", true).some(m => m.r === r && m.c === c)) cell.classList.add('valid-move');
                         } else if (selectedPiece && selectedCard) {
@@ -664,9 +746,6 @@
                 }
             });
 
-            // Ubicació visual correcta del lateral:
-            // Següent Rival (Esquerra) = SEMPRE de peu (0deg). 
-            // Següent Tu (Dreta) = SEMPRE al revés (180deg).
             const lSlot = document.getElementById('left-slot');
             const rSlot = document.getElementById('right-slot');
             [...lSlot.children, ...rSlot.children].forEach(child => { if (!child.classList.contains('label-side')) child.remove(); });
@@ -675,10 +754,10 @@
             if (sideUI) {
                 sideUI.id = "side-card-ui";
                 if (currentPlayer === "player") {
-                    sideUI.classList.add('inverted'); // Esperant al costat dret al revés per a nosaltres
+                    sideUI.classList.add('inverted'); 
                     rSlot.appendChild(sideUI);
                 } else {
-                    sideUI.classList.remove('inverted'); // Esperant a l'esquerra de peu per la CPU
+                    sideUI.classList.remove('inverted'); 
                     lSlot.appendChild(sideUI);
                 }
             }
@@ -752,12 +831,13 @@
                 windStatus.classList.add('hidden');
                 if (currentPlayer === "player") {
                     indicator.innerText = "És el teu torn";
-                    indicator.className = "mb-2 text-sm text-blue-900 font-black animate-pulse uppercase tracking-wider";
+                    indicator.className = "mb-1 text-md text-stone-800 font-bold tracking-widest bg-white/50 px-4 py-1 rounded shadow-sm animate-pulse";
                 } else if (currentPlayer === "cpu") {
                     indicator.innerText = "L'escola rival medita el seu destí...";
-                    indicator.className = "mb-2 text-sm text-red-900 font-black uppercase tracking-wider";
+                    indicator.className = "mb-1 text-md text-red-900 font-black uppercase tracking-wider bg-white/50 px-4 py-1 rounded shadow-sm";
                 }
             }
+            updateUndoButton();
         }
 
         // --- SISTEMA D'ANIMACIONS EN TAULELL ---
@@ -801,7 +881,7 @@
                 const dx = target.left + target.width/2 - (start.left + start.width/2);
                 const dy = target.top + target.height/2 - (start.top + start.height/2);
 
-                clone.getBoundingClientRect(); // trigger reflow
+                clone.getBoundingClientRect(); 
 
                 clone.style.transform = `translate(${dx}px, ${dy}px)`;
 
@@ -816,7 +896,6 @@
         // --- LÒGICA DE JOC I TORN ---
 
         function handleCellClick(r, c) {
-            // El bloqueig per animació impedeix clicar prematurament.
             if (currentPlayer !== "player" || isAnimating || isAnimatingCards) return;
             
             if (isMovingWind) {
@@ -837,7 +916,10 @@
             if (selectedPiece && selectedCard) {
                 const moves = getValidMoves(selectedPiece.r, selectedPiece.c, selectedCard, "player", false);
                 const move = moves.find(m => m.r === r && m.c === c);
-                if (move) executeTurn("player", selectedPiece, move, selectedCard.idx);
+                if (move) {
+                    saveState(); // Desem estat abans de moure
+                    executeTurn("player", selectedPiece, move, selectedCard.idx);
+                }
             }
         }
 
@@ -866,7 +948,6 @@
             isAnimatingCards = true;
             const currentCard = selectedCard; 
 
-            // FASE 1: LA CPU MOU LA SEVA CARTA (SENSE GIRAR VISUALMENT: va al Següent Tu)
             if (player === "cpu") {
                 const usedCardId = `cpu-card-${cardIdx}`;
                 const targetSlotId = "right-slot";
@@ -877,7 +958,6 @@
                 }
             }
 
-            // FASE 2: MOURE PEÇA AL TAULELL ANIMADA
             const isSwapWithWind = (windEnabled && to.r === windPos.r && to.c === windPos.c);
             await animateBoardMove(from, to, isSwapWithWind);
 
@@ -896,20 +976,19 @@
             renderBoard();
             if (checkWin(movingPiece, targetPiece, to)) return;
 
-            // FASE 3: MOVIMENT DEL VENT
             if (currentCard && currentCard.set === 'wind') {
                 const availableWindMoves = getValidMoves(windPos.r, windPos.c, currentCard, player, true);
                 
                 if (availableWindMoves.length > 0) {
                     isMovingWind = true;
-                    isAnimating = false; // Allibera l'UI pel jugador per triar la casella del vent
+                    isAnimating = false; 
                     isAnimatingCards = false;
                     updateUI();
                     renderBoard(); 
                     
                     if (player === "player") {
-                        // Creem la promesa per esperar la decisió
-                        await new Promise(resolve => { windMoveResolver = resolve; });
+                        const result = await new Promise(resolve => { windMoveResolver = resolve; });
+                        if (result && result.abort) return; // Tall en sec si polsa Desfer
                     } else {
                         await new Promise(resolve => setTimeout(resolve, 800));
                         const cpuPromise = new Promise(resolve => { windMoveResolver = resolve; });
@@ -922,7 +1001,6 @@
                 }
             } 
             
-            // FASE 4: FINALITZAR TORN I ROTAR CARTES
             await finalizeTurn(player, cardIdx, currentCard);
         }
 
@@ -962,7 +1040,6 @@
         }
 
         async function finalizeTurn(player, cardIdx, currentCard) {
-            // FASE 4a: EL JUGADOR MOU LA SEVA CARTA AL LATERAL RIVAL (De peu)
             if (player === "player") {
                 const usedCardId = `player-card-${cardIdx}`;
                 const targetSlotId = "left-slot"; 
@@ -973,7 +1050,6 @@
                 }
             }
 
-            // FASE 5: LA CARTA LATERAL VOLA A LA MÀ BUIDA FENT UN GIR
             const incomingSlotId = (player === "player") ? "right-slot" : "left-slot";
             const sideCardEl = document.querySelector(`#${incomingSlotId} .card`);
             const placeholderEl = document.getElementById((player === "player") ? `placeholder-player-card-${cardIdx}` : `placeholder-cpu-card-${cardIdx}`);
@@ -983,7 +1059,6 @@
                 await animateCardToHand(sideCardEl, placeholderEl, isForPlayer);
             }
 
-            // FASE 6: ACTUALITZACIÓ LÒGICA I CANVI DE TORN
             const hand = (player === "player") ? playerHand : cpuHand;
             const usedData = hand[cardIdx];
             hand[cardIdx] = sideCard;
@@ -1029,7 +1104,6 @@
 
                 clone.getBoundingClientRect(); 
 
-                // CPU va a Següent Tu (invertida). Jugador a Següent Rival (de peu).
                 const finalRotation = isCpu ? 'rotate(180deg)' : 'rotate(0deg)';
                 clone.style.transform = `translate(${dx}px, ${dy}px) ${finalRotation}`;
 
@@ -1071,7 +1145,6 @@
 
                 clone.getBoundingClientRect();
 
-                // L'efecte de donar la volta en vol.
                 const finalRotation = isForPlayer ? 'rotate(0deg)' : 'rotate(180deg)';
                 clone.style.transform = `translate(${dx}px, ${dy}px) ${finalRotation} scale(1.05)`;
 
